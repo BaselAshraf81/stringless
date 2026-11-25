@@ -53,6 +53,7 @@ Starting choreography. LEXICON.md can reassign any verb; then the whole product 
 - **Cause first.** The control moves first, then the target answers. A wave that starts at the cursor and arrives at the target explains the cause.
 - **Interruptible.** Every commit can be reversed or redirected mid-flight when the action allows it. Use springs and the Web Animations API, not fixed CSS keyframes, for anything a user can interrupt.
 - **Start from where it is.** When one motion takes over from another (a commit after a rehearsal, a new choice mid-commit, a leave mid-rehearsal), read the value on screen first, such as `getComputedStyle(el).translate`, then cancel the old animation and start the new one from that value. Never start from the last resting place or a fixed `from` keyframe: cancelling the old animation snaps the object back before the new one moves it. `reverse()` is only safe when the object goes back the way it came. A CSS transition on the same property, or the runtime's `spring().retarget()`, carries the current value for you.
+- **One progress per action.** When an action has several paths (hold, press twice, keyboard), they share one progress value. The first press shows part of the effect and waits, holding continues from there, and the second press plays the rest quickly. No path restarts the effect or skips to the end.
 - **Motion lands in a place.** The end state must be stable, visible and findable: the sent envelope in the outbox, the ash where the card stood.
 
 ## Timing by weight
@@ -97,6 +98,7 @@ Proximity effects run on every pointer move, so per-frame work adds up. Hold 60f
 - **Read, then write.** In a frame, read layout (`getBoundingClientRect`, `offsetWidth`) before you change any style.
 - **One loop.** Use CSS or the Web Animations API for motion, and the runtime's frame loop for pointer work. No animation timers, and no `requestAnimationFrame` loop that runs when nothing moves. Pause work that is off screen or in a hidden tab.
 - **Filters cost per pixel.** Blur, `backdrop-filter` and SVG displacement slow down with the area they cover. Keep them small and off scrolling content.
+- **Keep text crisp.** Place text on whole device pixels: `Math.round(v * devicePixelRatio) / devicePixelRatio`. Centering with `translate: -50%` or positioning at 0.1px puts glyphs between pixels, and the text blurs.
 - **No long tasks.** Nothing over 50ms at load or on input. Precompute what you can and split the rest across frames.
 To check in Chrome, run this in the console, then point at and use every control. Any warning while pointing or committing is jank to fix.
 ```js

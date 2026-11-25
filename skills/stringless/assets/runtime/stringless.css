@@ -394,7 +394,7 @@
   position: fixed;
   z-index: 2147483001;
   pointer-events: none;
-  translate: -50% 3px;
+  translate: 0 3px;
   max-width: min(28ch, 80vw);
   padding: 5px 9px;
   border-radius: 7px;
@@ -408,7 +408,7 @@
   white-space: normal;
   text-align: center;
 }
-.sl-caption[data-show] { opacity: 1; translate: -50% 0; }
+.sl-caption[data-show] { opacity: 1; translate: 0 0; }
 
 /* ------------------------------------------------------------------ tethers */
 

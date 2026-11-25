@@ -28,6 +28,7 @@
     radius: 120,
     hold: 1100,
     armWindow: 4000,
+    armLevel: 0.2,
     hesitate: 1600,
     peek: 1800,
     memory: true,
@@ -354,7 +355,7 @@
     return {
       el, verb: el.getAttribute('data-sl-verb') || 'act', state: '', near: 0,
       hover: false, focus: false, touch: false, committing: false,
-      holding: false, holdStart: 0, holdP: 0, downAt: 0,
+      holding: false, holdStart: 0, holdP: 0, downAt: 0, downX: 0, downY: 0, tween: 0, finishing: false,
       armed: false, armTimer: 0, pass: false, suppressUntil: 0,
       hesitant: false, hesTimer: 0, peekTimer: 0, longPressed: false, commitTimer: 0,
       targets: [], rect: null, caption: null, captionTimer: 0, tether: null, warned: {}
@@ -428,10 +429,11 @@
   function refresh(s) {
     let next = 'rest';
     if (s.committing) next = 'commit';
+    else if (s.holding || s.finishing) next = 'hold';
     else if (s.armed) next = 'armed';
-    else if (s.holding) next = 'hold';
     else if (s.hover || s.focus || s.touch) next = 'rehearse';
-    else if (s.near > 0.02) next = 'near';
+    // A heavy control that is still charged or cooling keeps its target until the effect is gone.
+    else if (s.near > 0.02 || s.holdP > 0.001) next = 'near';
     setState(s, next);
   }
   const ACTIVE = { rehearse: 1, hold: 1, armed: 1, commit: 1 };
@@ -598,8 +600,11 @@
     if (side === 'left') { x = r.left - cw / 2 - 8; y = r.top + r.height / 2 - ch / 2; }
     if (side === 'right') { x = r.right + cw / 2 + 8; y = r.top + r.height / 2 - ch / 2; }
     x = clamp(x, cw / 2 + 4, innerWidth - cw / 2 - 4);
-    c.style.left = round(x, 1) + 'px';
-    c.style.top = round(Math.max(4, y), 1) + 'px';
+    // Whole device pixels. Centered with translate(-50%) or placed at 0.1px, the text lands between pixels and blurs.
+    const dpr = G.devicePixelRatio || 1;
+    const snap = (v) => Math.round(v * dpr) / dpr;
+    c.style.left = snap(x - cw / 2) + 'px';
+    c.style.top = snap(Math.max(4, y)) + 'px';
   }
   function peek(s, ms) {
     showCaption(s);
@@ -677,28 +682,37 @@
     const s = controls.get(e.currentTarget);
     if (!s) return;
     s.downAt = now();
+    s.downX = e.clientX;
+    s.downY = e.clientY;
     s.longPressed = false;
     if (e.pointerType === 'touch') { s.touch = true; pointer.type = 'touch'; light.set(e.clientX, e.clientY); }
-    const up = () => { cleanup(); onUp(s); };
+    const up = (ev) => { cleanup(); onUp(s, ev); };
     const cancel = () => { cleanup(); onPointerCancel(s); };
     const cleanup = () => { removeEventListener('pointerup', up, true); removeEventListener('pointercancel', cancel, true); };
     addEventListener('pointerup', up, true);
     addEventListener('pointercancel', cancel, true);
-    if (isHeavy(s) && !s.armed) startHold(s);
+    if (isHeavy(s)) { if (!s.finishing) { clearTimeout(s.armTimer); startHold(s); } }
     else if (e.pointerType === 'touch') {
       clearTimeout(s.peekTimer);
       s.peekTimer = setTimeout(() => { s.longPressed = true; peek(s); }, 520);
     }
     refresh(s);
   }
-  function onUp(s) {
+  function onUp(s, e) {
     if (!s.longPressed) clearTimeout(s.peekTimer);
     // A hold that already committed: swallow the click the release is about to produce.
     if (s.heldCommit) { s.heldCommit = false; s.suppressUntil = now() + 450; }
-    const held = now() - (s.downAt || now());
     if (s.holding) {
-      if (held < 260) stopHold(s);
-      else { cancelHold(s); s.suppressUntil = now() + 450; }
+      const held = now() - (s.downAt || now());
+      const moved = e && e.clientX != null ? Math.hypot(e.clientX - s.downX, e.clientY - s.downY) : 0;
+      // The release is handled here, so the click it produces must not arm or commit again.
+      s.suppressUntil = now() + 450;
+      if (held < 260 && moved < 10) {
+        // A tap. The first shows part of the effect and waits; the second plays the rest.
+        s.holding = false;
+        if (s.armed) finishHold(s);
+        else arm(s, 'pointer');
+      } else cancelHold(s);
     }
     if (s.longPressed) s.suppressUntil = now() + 450;
     if (s.touch) { s.touch = false; setTimeout(() => refresh(s), 60); }
@@ -723,7 +737,7 @@
     const s = controls.get(e.currentTarget);
     if (!s || s.el.contains(e.relatedTarget)) return;
     s.focus = false;
-    if (s.armed) disarm(s, 'blur');
+    if (s.armed && !s.finishing) disarm(s, 'blur');
     refresh(s);
   }
   function onKeyDown(e) {
@@ -738,9 +752,11 @@
     if (s.pass) { s.pass = false; return; }
     if (s.suppressUntil && now() < s.suppressUntil) { s.suppressUntil = 0; e.preventDefault(); e.stopImmediatePropagation(); return; }
     if (!isHeavy(s)) return;
-    if (s.armed) { clearTimeout(s.armTimer); s.armed = false; return; }
+    // Heavy: handlers get one click, the one commitByHold sends when the effect completes.
     e.preventDefault();
     e.stopImmediatePropagation();
+    if (s.finishing) return;
+    if (s.armed) { finishHold(s); return; }
     // Keyboard and assistive-tech clicks arrive with detail 0 and no recent pointerdown.
     arm(s, e.detail > 0 && now() - s.downAt < 1200 ? 'pointer' : 'key');
   }
@@ -754,48 +770,74 @@
   }
 
   // ---------------------------------------------------------------- hold / arm / commit
+  // Every path to a heavy commit shares one progress, --sl-hold: holding, the first press (armLevel)
+  // and the second press (plays the rest). Each move starts from the current value; nothing restarts.
   function startHold(s) {
+    s.tween++;
     s.holding = true;
-    s.holdStart = now();
-    s.holdP = 0;
+    s.holdStart = now() - s.holdP * holdMs(s);
     refresh(s);
     schedule();
-  }
-  function stopHold(s) {
-    s.holding = false;
-    s.holdP = 0;
-    setVar(s.el, '--sl-hold', 0);
-    pushTargets(s);
-    refresh(s);
   }
   function cancelHold(s) {
     if (!s.holding) return;
     const from = s.holdP;
     s.holding = false;
     emit(s.el, 'sl:cancel', { reason: 'release' });
-    if (from > 0.15) { sound.play(material(s), 'cancel'); haptics.pulse('cancel'); }
-    const start = now();
-    const dur = 80 + 320 * from;
-    const tick = () => {
-      if (s.holding) return;
-      const p = clamp((now() - start) / dur);
-      s.holdP = from * (1 - p) * (1 - p);
-      setVar(s.el, '--sl-hold', round(s.holdP, 3));
-      pushTargets(s);
-      if (p < 1) requestAnimationFrame(tick);
-      else { s.holdP = 0; setVar(s.el, '--sl-hold', 0); refresh(s); }
-    };
-    requestAnimationFrame(tick);
+    const to = s.armed ? config.armLevel : 0;
+    if (from - to > 0.15) { sound.play(material(s), 'cancel'); haptics.pulse('cancel'); }
+    // It cools back to where it was: the first-press level while armed, otherwise nothing.
+    tweenHold(s, to, 80 + 320 * Math.abs(from - to), holdEaseOut, () => { if (s.armed) startArmWindow(s); });
     refresh(s);
   }
-  function commitByHold(s) {
+  const holdEaseOut = (p) => 1 - (1 - p) * (1 - p);
+  const holdEaseInOut = (p) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
+  function tweenHold(s, to, ms, ease, done) {
+    const id = ++s.tween;
+    const from = s.holdP;
+    const start = now();
+    const tick = () => {
+      if (id !== s.tween) return;
+      const p = ms > 0 ? clamp((now() - start) / ms) : 1;
+      s.holdP = from + (to - from) * ease(p);
+      setVar(s.el, '--sl-hold', round(s.holdP, 3));
+      pushTargets(s);
+      if (p < 1) { requestAnimationFrame(tick); return; }
+      refresh(s);
+      if (done) done();
+    };
+    // Always a frame later, even for 0ms: the commit it may end in can't fire inside the current click.
+    requestAnimationFrame(tick);
+  }
+  function commitNow(s) {
+    s.tween++;
     s.holding = false;
-    s.heldCommit = true;
+    s.finishing = false;
+    s.armed = false;
+    clearTimeout(s.armTimer);
     s.holdP = 1;
     setVar(s.el, '--sl-hold', 1);
+    pushTargets(s);
     s.pass = true;
-    s.suppressUntil = now() + 600;
     s.el.click();
+  }
+  function commitByHold(s) {
+    s.heldCommit = true;
+    s.suppressUntil = now() + 600;
+    commitNow(s);
+  }
+  // The second press: the rest of the effect plays quickly, then it commits.
+  function finishHold(s) {
+    if (s.finishing) return;
+    s.finishing = true;
+    s.armed = false;
+    clearTimeout(s.armTimer);
+    refresh(s);
+    tweenHold(s, 1, reduced() ? 0 : 160 + 260 * (1 - s.holdP), holdEaseInOut, () => commitNow(s));
+  }
+  function startArmWindow(s) {
+    clearTimeout(s.armTimer);
+    s.armTimer = setTimeout(() => disarm(s, 'timeout'), config.armWindow);
   }
   function arm(s, source) {
     s.armed = true;
@@ -806,8 +848,9 @@
     announce((nameOf(s.el) ? nameOf(s.el) + '. ' : '') + config.armHint);
     emit(s.el, 'sl:arm');
     peek(s, config.armWindow);
-    clearTimeout(s.armTimer);
-    s.armTimer = setTimeout(() => disarm(s, 'timeout'), config.armWindow);
+    // The first press shows part of the effect and holds it there.
+    tweenHold(s, Math.max(s.holdP, config.armLevel), reduced() ? 0 : 220, holdEaseOut);
+    startArmWindow(s);
   }
   function disarm(s, reason) {
     if (!s.armed) return;
@@ -816,6 +859,7 @@
     emit(s.el, 'sl:cancel', { reason });
     sound.play(material(s), 'cancel');
     if (!captionsOn && !s.hesitant) hideCaption(s);
+    if (!s.holding) tweenHold(s, 0, 80 + 320 * s.holdP, holdEaseOut);
     refresh(s);
   }
   function commit(s) {
@@ -895,7 +939,7 @@
         setVar(el, '--sl-near', round(near, 3));
         refresh(s);
       }
-      if (s.armed && s.armSource === 'pointer' && !s.hover && doc.activeElement !== el && s.near < 0.5) disarm(s, 'leave');
+      if (s.armed && s.armSource === 'pointer' && pointer.type !== 'touch' && !s.hover && doc.activeElement !== el && s.near < 0.5) disarm(s, 'leave');
       if (s.holding) {
         s.holdP = clamp((now() - s.holdStart) / holdMs(s));
         setVar(el, '--sl-hold', round(s.holdP, 3));

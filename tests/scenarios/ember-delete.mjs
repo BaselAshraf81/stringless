@@ -52,6 +52,27 @@ export default async (p) => {
   let left = 3;
   for (let t = 0; t < 40 && left !== 2; t++) { await p.sleep(100); left = await p.eval(visibleCards); }
   p.expect(left === 2, 'second Enter burns');
+
+  // A tap chars the corner and waits. Holding then keeps burning from there, and the hold commits.
+  await p.move(100, 700, 3);
+  await p.sleep(500);
+  const card = 'main > article:last-of-type';
+  const hold = `+getComputedStyle(document.querySelector('${card}')).getPropertyValue('--sl-hold')`;
+  const n3 = await p.center(`${card} .notch`);
+  await p.move(n3.x, n3.y, 4);
+  await p.sleep(200);
+  await p.down(); await p.sleep(60); await p.up();
+  await p.sleep(400);
+  const armed = await p.eval(hold);
+  p.expect(armed > 0.1 && armed < 0.4 && await p.eval(visibleCards) === 2, `a tap burns a little and waits (${armed.toFixed(2)})`);
+  await p.down();
+  await p.sleep(450);
+  const more = await p.eval(hold);
+  p.expect(more > armed + 0.2, `holding after the tap keeps burning (${more.toFixed(2)})`);
+  await p.sleep(900);
+  await p.up();
+  await p.sleep(1400);
+  p.expect(await p.eval(visibleCards) === 1, 'the hold finishes the burn');
   await p.reducedMotion(true);
   await p.goto('skills/stringless/assets/examples/ember-delete.html');
   await p.eval(`document.querySelector('.card:nth-child(3) .notch').focus()`);

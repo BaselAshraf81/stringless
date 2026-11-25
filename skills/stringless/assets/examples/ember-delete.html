@@ -4,7 +4,8 @@
   What is it?            A charred corner on each note card, with a faint warm seam.
   What does it touch?    Its own card. The seam brightens as the pointer approaches.
   What will it do?       On hover or focus the card starts to char from that corner.
-  What does it cost?     Heavy. Hold while the burn spreads, or press twice. Release early and it cools.
+  What does it cost?     Heavy. Hold while the burn spreads; release early and it cools. A tap chars the
+                         corner and waits: hold to keep burning, or tap again to finish it.
   Where is it in time?   The burnt card falls as ash. The ash pile stays for 7 seconds, cooling;
                          press it and the card rises back out of the ash.
   Lexicon: ember = destroys; ash = what is left, and the way back; cooling ash = time running out.
@@ -60,7 +61,6 @@
     filter: url(#burn-edge);
     opacity: min(1, calc(var(--b) * 14));
   }
-  .card[data-sl-armed] .burn { --b: .32; }
 
   .notch {
     all: unset;

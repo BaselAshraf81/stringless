@@ -22,7 +22,7 @@ With a bundler: `import './vendor/stringless/stringless.js'` and import the CSS 
 |---|---|---|
 | `data-sl-verb` | a verb (`delete`, `save`, `send`) | makes the element a stringless control; its verb names the preview on the target |
 | `data-sl-target` | CSS selector, `self`, `parent`, or `closest(<selector>)` | what reacts on approach and rehearse |
-| `data-sl-weight` | `light` (default), `medium`, `heavy` | heavy needs a hold, or two presses for keyboard and screen readers |
+| `data-sl-weight` | `light` (default), `medium`, `heavy` | heavy needs a hold, or two presses (taps, Enter or Space): the first shows part of the effect and waits, the second plays the rest |
 | `data-sl-hold` | milliseconds (default 1100) | hold length for heavy controls |
 | `data-sl-radius` | pixels (default 120) | proximity radius |
 | `data-sl-material` | a material name | material surface and light response; also picks the sound |
@@ -88,12 +88,12 @@ All bubble, with `detail.verb`.
 | `sl:hesitate` | the rehearsal lasted past `data-sl-hesitate` |
 | `sl:phase` | `Stringless.phase()` changed a phase (`detail.from`, `detail.to`) |
 
-For heavy controls, the click that reaches your handlers is the committed one; the arming click is stopped before it.
+For heavy controls, your click handlers get one click, sent when the effect completes; the presses before it are stopped.
 
 ## JavaScript API
 
 ```js
-Stringless.init({ radius, hold, armWindow, hesitate, peek, memory, captionKey, armHint, dev })
+Stringless.init({ radius, hold, armWindow, armLevel, hesitate, peek, memory, captionKey, armHint, dev })
 Stringless.refresh()                         // rescan, if you changed attributes in bulk
 
 Stringless.verbs.shatter(el, { origin, tint: 'ash', gravity, duration })   // -> handle
@@ -139,7 +139,7 @@ Verbs respect reduced motion on their own. `shatter`, `dissolve` and `fold` hide
 
 ## Behavior summary
 
-- **Pointer**: proximity grows `--sl-near`; hover rehearses; leaving reverses.
-- **Keyboard**: focus-visible rehearses; Enter and Space commit; heavy controls arm on the first press, announce "Press again to confirm", and commit on the second within 4 seconds; Escape and blur cancel. `?` toggles captions anywhere outside text fields.
-- **Touch**: touch-hold rehearses; a long press on a light control shows its caption without committing; heavy controls commit when the hold completes.
+- **Pointer**: proximity grows `--sl-near`; hover rehearses; leaving reverses. Heavy controls share one progress, `--sl-hold`: holding grows it and commits at 1; a tap arms at `armLevel` (0.2); holding again continues from there; a second tap plays the rest, then commits. Releasing early cools it back.
+- **Keyboard**: focus-visible rehearses; Enter and Space commit; heavy controls arm on the first press (showing `armLevel` of the effect), announce "Press again to confirm", and on a second press within 4 seconds play the rest, then commit; Escape and blur cancel. `?` toggles captions anywhere outside text fields.
+- **Touch**: touch-hold rehearses; a long press on a light control shows its caption without committing; heavy controls commit when the hold completes, and a tap arms them like a key press.
 - **Memory**: uses and hesitations per verb, and use counts per `data-sl-id`, persist in localStorage. `Stringless.init({ memory: false })` turns persistence off.
