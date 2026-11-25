@@ -1,0 +1,33 @@
+const checked = `[...document.querySelectorAll('input[name=ship]')].findIndex(i => i.checked)`;
+
+export default async (p) => {
+  await p.viewport(1280, 800);
+  await p.goto('skills/stringless/assets/examples/marble-choice.html');
+  await p.shot('marble-rest');
+  const w3 = await p.center('.well-wrap:nth-child(3) .well');
+  await p.move(w3.x, w3.y, 10);
+  await p.sleep(600);
+  p.expect(await p.eval(`document.querySelector('.tray').style.getPropertyValue('--tilt')`) === '1', 'hovering a well tips the tray toward it');
+  await p.shot('marble-rehearse');
+  await p.move(w3.x, w3.y + 260, 6);
+  await p.sleep(600);
+  p.expect(await p.eval(`document.querySelector('.tray').style.getPropertyValue('--tilt')`) === '0', 'leaving levels the tray');
+  await p.click(w3.x, w3.y);
+  await p.sleep(1500);
+  p.expect(await p.eval(checked) === 2, 'click chooses Overnight');
+  p.expect(await p.eval(`document.querySelector('.total').textContent`) === '$63.00', 'total updates to $63.00');
+  const m = await p.center('.marble');
+  p.expect(Math.abs(m.x - w3.x) < 3 && Math.abs(m.y - w3.y - 3) < 4, 'marble rests in the chosen well');
+  await p.move(640, 700, 6);
+  await p.sleep(500);
+  await p.shot('marble-chosen');
+  await p.eval(`document.querySelector('input[name=ship]:checked').focus()`);
+  await p.key('ArrowLeft', 'ArrowLeft', { vk: 37 });
+  await p.sleep(1200);
+  p.expect(await p.eval(checked) === 1, 'ArrowLeft moves the choice (native radio)');
+  p.expect(await p.eval(`document.querySelector('.total').textContent`) === '$48.00', 'total updates to $48.00');
+  await p.shot('marble-keyboard');
+  await p.viewport(390, 844, true);
+  await p.goto('skills/stringless/assets/examples/marble-choice.html');
+  await p.shot('marble-mobile');
+};

@@ -1,0 +1,305 @@
+<!doctype html>
+<!--
+  Stringless example: slot-print export. Strangeness 3.
+  What is it?            A metal printer bar under the report, with a slot, and three paper stocks
+                         in a rack: a plain sheet, a ruled ledger strip and a glossy photo card.
+  What does it touch?    The report above it. The loaded stock decides the format.
+  What will it do?       On approach the print starts to feed; on hover or focus it slides halfway
+                         out of the slot, already in its future form: the page for PDF, the ledger
+                         for CSV, the chart as a photo for PNG.
+  What does it cost?     Medium. One press. The real file is created and downloaded.
+  Where is it in time?   The finished print drops into the tray and stays there as a link to the
+                         file, named with its extension (a file name is content, so it stays text).
+  Lexicon: slot = export; stock = format; tray = exported files.
+  Reduced motion: the print appears in the tray with a brief highlight; nothing slides.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slot-print export · Stringless</title>
+<link rel="stylesheet" href="../runtime/stringless.css">
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    display: grid;
+    place-items: center;
+    padding: 32px 16px 48px;
+    background:
+      radial-gradient(900px circle at var(--sl-px, 50%) var(--sl-py, 10%), rgb(255 255 255 / .45), transparent 60%),
+      var(--sl-grain),
+      #c9cdc6;
+    background-blend-mode: normal, multiply, normal;
+    font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    color: #23262a;
+  }
+  .desk { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: ". report ." "rack printer tray"; gap: 18px 22px; align-items: start; }
+
+  .report { grid-area: report; width: min(440px, 80vw); padding: 26px 28px 24px; border-radius: 3px; }
+  .report h1 { margin: 0 0 4px; font: 600 22px/1.2 "Iowan Old Style", Palatino, Georgia, serif; }
+  .report p { margin: 0 0 14px; font-size: 13px; color: #5d5850; }
+  .chart { display: grid; grid-template-columns: repeat(5, 1fr); align-items: end; gap: 10px; height: 92px; padding-bottom: 6px; border-bottom: 1px solid rgb(40 35 30 / .25); }
+  .chart i { display: block; border-radius: 2px 2px 0 0; background: linear-gradient(#3e6b8c, #2c4f6a); }
+  table { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  td { padding: 4px 0; border-bottom: 1px solid rgb(40 35 30 / .1); }
+  td + td { text-align: right; }
+
+  /* Printer */
+  .printer { grid-area: printer; display: grid; justify-items: center; }
+  .bar {
+    position: relative;
+    z-index: 2;
+    width: min(440px, 80vw);
+    height: 30px;
+    border-radius: 6px;
+  }
+  .slot {
+    all: unset;
+    position: absolute;
+    left: 14%; right: 14%; top: 50%;
+    height: 44px;
+    translate: 0 -50%;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .slot::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 50%; height: 6px;
+    translate: 0 -50%;
+    border-radius: 3px;
+    background: linear-gradient(#0c0d0f, #2a2d31);
+    box-shadow: inset 0 2px 2px rgb(0 0 0 / .8), 0 1px 0 rgb(255 255 255 / .55);
+  }
+  .slot::after {
+    /* a thin light along the slot lip that wakes as the pointer nears */
+    content: '';
+    position: absolute;
+    left: 6%; right: 6%; top: calc(50% + 4px); height: 1px;
+    background: rgb(255 248 220 / calc(var(--sl-near) * .9));
+    box-shadow: 0 0 calc(var(--sl-near) * 8px) rgb(255 240 200 / calc(var(--sl-near) * .8));
+  }
+  .slot:focus-visible { outline: 2px solid #1f5fbf; outline-offset: 2px; border-radius: 6px; }
+
+  .outfeed {
+    position: relative;
+    z-index: 1;
+    width: calc(min(440px, 80vw) * .72);
+    height: 190px;
+    margin-top: -2px;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .print {
+    --feed: calc(var(--sl-rehearse) * var(--sl-intensity) * .56);
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 190px;
+    translate: 0 calc((-1 + var(--feed)) * 100%);
+    transition: translate .5s var(--sl-ease-paper);
+    box-shadow: 0 8px 14px -6px rgb(0 0 0 / .35);
+  }
+  .print .face { position: absolute; inset: 0; overflow: hidden; }
+  .print .fname { position: absolute; right: 8px; bottom: 6px; font: 500 10.5px/1 "Avenir Next", system-ui, sans-serif; color: rgb(30 30 30 / .6); }
+
+  .print[data-kind="pdf"] { background: #fbfaf6; }
+  .print[data-kind="pdf"] .face > .mini { position: absolute; left: 50%; top: 10px; width: 440px; transform-origin: 50% 0; translate: -50% 0; }
+  .print[data-kind="csv"] {
+    background:
+      linear-gradient(90deg, transparent 0 40%, rgb(80 140 100 / .5) 40% calc(40% + 1px), transparent calc(40% + 1px)),
+      repeating-linear-gradient(180deg, #f3f7ee 0 21px, #dfead8 21px 22px);
+  }
+  .print[data-kind="csv"] .face { padding: 6px 14px; font: 12px/22px ui-monospace, "Cascadia Mono", Consolas, monospace; color: #234; display: grid; grid-template-columns: 40% 60%; align-content: start; }
+  .print[data-kind="csv"] .face span:nth-child(even) { text-align: right; }
+  .print[data-kind="png"] { background: #fff; padding: 10px; }
+  .print[data-kind="png"] .face { inset: 10px 10px 26px; border-radius: 1px; background: linear-gradient(160deg, #f6f3ea, #e9e4d8); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .06); }
+  .print[data-kind="png"] .face::after { content: ''; position: absolute; inset: 0; background: linear-gradient(120deg, rgb(255 255 255 / .55), transparent 40%); }
+  .print[data-kind="png"] .face > .mini { position: absolute; left: 50%; top: 50%; width: 384px; transform-origin: 50% 50%; translate: -50% -50%; }
+
+  /* Rack of stocks: a radio group. The loaded stock sits forward, toward the printer. */
+  .rack { grid-area: rack; display: grid; gap: 10px; padding-top: 2px; }
+  .stock { position: relative; display: block; width: 64px; height: 44px; cursor: pointer; transition: translate .35s var(--sl-ease-paper); }
+  .stock input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+  .stock .sheet { position: absolute; inset: 0; border-radius: 2px; box-shadow: 0 1px 2px rgb(0 0 0 / .25), 2px 2px 0 -1px #f4f2ec, 2px 2px 1px -1px rgb(0 0 0 / .2), 4px 4px 0 -2px #efede6, 4px 4px 1px -2px rgb(0 0 0 / .2); }
+  .stock[data-k="pdf"] .sheet { background: repeating-linear-gradient(180deg, transparent 0 7px, rgb(0 0 0 / .08) 7px 8px) 8px 8px / 70% 60% no-repeat, #fbfaf6; }
+  .stock[data-k="csv"] .sheet { background: linear-gradient(90deg, transparent 0 40%, rgb(80 140 100 / .55) 40% calc(40% + 1px), transparent calc(40% + 1px)), repeating-linear-gradient(180deg, #f3f7ee 0 6px, #cfe0c6 6px 7px); }
+  .stock[data-k="png"] .sheet { background: linear-gradient(120deg, rgb(255 255 255 / .7), transparent 45%), linear-gradient(160deg, #6d8fa6, #2d4a5f) 5px 5px / calc(100% - 10px) calc(100% - 14px) no-repeat, #fff; }
+  .stock:has(input:checked) { translate: calc(10px * var(--sl-motion)) 0; }
+  .stock:has(input:checked) .sheet { box-shadow: 0 6px 12px -4px rgb(0 0 0 / .35), 0 0 0 2px rgb(255 255 255 / .9); }
+  .stock:has(input:focus-visible) { outline: 2px solid #1f5fbf; outline-offset: 4px; border-radius: 3px; }
+
+  /* Tray: exported files, each a link to its file. */
+  .tray { grid-area: tray; position: relative; width: 112px; min-height: 120px; margin: 0; padding: 10px 8px 12px; list-style: none; border-radius: 6px; display: flex; flex-direction: column-reverse; align-items: center; justify-content: flex-start; }
+  .tray::before { content: ''; position: absolute; inset: auto 0 0; height: 16px; border-radius: 0 0 6px 6px; background: linear-gradient(#9aa0a6, #6d737a); box-shadow: inset 0 1px 0 rgb(255 255 255 / .5); }
+  .tray li { margin-top: -36px; }
+  .tray li:first-child { margin-top: 0; }
+  .tray a { position: relative; display: block; width: 88px; padding: 30px 6px 5px; border-radius: 2px; background: #fbfaf6; box-shadow: 0 1px 3px rgb(0 0 0 / .3); font-size: 10.5px; color: #333; text-decoration: none; text-align: right; rotate: var(--r, 0deg); }
+  .tray a[data-kind="csv"] { background: repeating-linear-gradient(180deg, #f3f7ee 0 6px, #d7e6cf 6px 7px); }
+  .tray a[data-kind="png"] { background: linear-gradient(160deg, #6d8fa6, #2d4a5f) 5px 5px / calc(100% - 10px) 26px no-repeat, #fff; }
+  .tray a:focus-visible { outline: 2px solid #1f5fbf; outline-offset: 2px; }
+  .tray a:hover, .tray a:focus-visible { translate: 0 -3px; }
+
+  @media (max-width: 760px) {
+    .desk { grid-template-columns: 1fr; grid-template-areas: "report" "rack" "printer" "tray"; justify-items: center; gap: 16px; }
+    .rack { grid-auto-flow: column; gap: 18px; }
+    /* In a row, the loaded stock lifts toward the printer instead of sliding sideways. */
+    .stock:has(input:checked) { translate: 0 calc(8px * var(--sl-motion)); }
+    .outfeed { height: 150px; }
+    .print { height: 150px; }
+    .tray { flex-direction: row; flex-wrap: wrap; justify-content: center; width: min(320px, 86vw); min-height: 74px; gap: 8px; padding: 8px 8px 20px; }
+    .tray li { margin-top: 0; }
+    .tray a { width: 92px; }
+  }
+</style>
+</head>
+<body>
+<main class="desk">
+  <article class="report" data-sl-material="paper">
+    <h1>Q3 sales by region</h1>
+    <p>July to September, in dollars</p>
+    <div class="chart" aria-hidden="true"></div>
+    <table><tbody></tbody></table>
+  </article>
+
+  <div class="printer">
+    <div class="bar" data-sl-material="metal">
+      <button class="slot" type="button" data-sl-verb="export" data-sl-target=".outfeed" data-sl-radius="90" aria-label="Export as PDF"></button>
+    </div>
+    <div class="outfeed" aria-hidden="true">
+      <div class="print" data-kind="pdf"><div class="face"></div><span class="fname"></span></div>
+    </div>
+  </div>
+
+  <fieldset class="rack" style="border:0;margin:0;padding:0">
+    <legend style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">Format</legend>
+    <label class="stock" data-k="pdf"><span class="sheet" aria-hidden="true"></span><input type="radio" name="fmt" value="pdf" aria-label="PDF document" checked></label>
+    <label class="stock" data-k="csv"><span class="sheet" aria-hidden="true"></span><input type="radio" name="fmt" value="csv" aria-label="CSV spreadsheet"></label>
+    <label class="stock" data-k="png"><span class="sheet" aria-hidden="true"></span><input type="radio" name="fmt" value="png" aria-label="PNG image"></label>
+  </fieldset>
+
+  <ul class="tray" aria-label="Exported files"></ul>
+</main>
+
+<script src="../runtime/stringless.js"></script>
+<script>
+  const data = [['North', 42300], ['South', 38900], ['East', 51200], ['West', 29700], ['Online', 64800]];
+  const report = document.querySelector('.report');
+  const chart = report.querySelector('.chart');
+  const tbody = report.querySelector('tbody');
+  const max = Math.max(...data.map((d) => d[1]));
+  const fmt = (n) => '$' + n.toLocaleString('en-US');
+  chart.innerHTML = data.map(([, v]) => `<i style="height:${(v / max) * 100}%"></i>`).join('');
+  tbody.innerHTML = data.map(([k, v]) => `<tr><td>${k}</td><td>${fmt(v)}</td></tr>`).join('') + `<tr><td><b>Total</b></td><td><b>${fmt(data.reduce((a, d) => a + d[1], 0))}</b></td></tr>`;
+
+  const slot = document.querySelector('.slot');
+  const print = document.querySelector('.print');
+  const face = print.querySelector('.face');
+  const fname = print.querySelector('.fname');
+  const tray = document.querySelector('.tray');
+  const names = { pdf: 'PDF', csv: 'CSV', png: 'PNG' };
+  let kind = 'pdf';
+  let busy = false;
+
+  // The print shows the export's future form, built from the real report.
+  function dress() {
+    print.dataset.kind = kind;
+    fname.textContent = 'q3-sales.' + kind;
+    face.textContent = '';
+    if (kind === 'csv') {
+      face.innerHTML = '<span>Region</span><span>Sales</span>' + data.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('');
+    } else {
+      const mini = report.cloneNode(true);
+      mini.className = 'report mini';
+      mini.removeAttribute('data-sl-material');
+      mini.style.cssText = 'padding:26px 28px;background:none;box-shadow:none;filter:none;';
+      if (kind === 'png') { mini.querySelector('table').remove(); mini.querySelector('p').remove(); }
+      face.appendChild(mini);
+      const w = print.clientWidth - (kind === 'png' ? 20 : 0);
+      mini.style.transform = `scale(${((w - 16) / mini.offsetWidth).toFixed(3)})`;
+    }
+    slot.setAttribute('aria-label', 'Export as ' + names[kind]);
+  }
+  dress();
+  document.querySelectorAll('input[name=fmt]').forEach((r) => r.addEventListener('change', () => { kind = r.value; dress(); }));
+
+  // ---- real files
+  function csvBlob() { return new Blob(['Region,Sales\r\n' + data.map(([k, v]) => `${k},${v}`).join('\r\n') + '\r\n'], { type: 'text/csv' }); }
+  function pdfBlob() {
+    const esc = (s) => s.replace(/[\\()]/g, (m) => '\\' + m);
+    let y = 740;
+    let c = `BT /F1 20 Tf 56 ${y} Td (${esc('Q3 sales by region')}) Tj ET\n`;
+    y -= 24; c += `BT /F1 11 Tf 56 ${y} Td (${esc('July to September, in dollars')}) Tj ET\n`;
+    y -= 34;
+    for (const [k, v] of data) { c += `BT /F1 13 Tf 56 ${y} Td (${esc(k)}) Tj ET\nBT /F1 13 Tf 400 ${y} Td (${esc(fmt(v))}) Tj ET\n`; y -= 22; }
+    c += `BT /F1 13 Tf 56 ${y - 6} Td (Total) Tj ET\nBT /F1 13 Tf 400 ${y - 6} Td (${esc(fmt(data.reduce((a, d) => a + d[1], 0)))}) Tj ET\n`;
+    const objs = [
+      '<< /Type /Catalog /Pages 2 0 R >>',
+      '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+      `<< /Length ${c.length} >>\nstream\n${c}endstream`,
+      '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'
+    ];
+    let out = '%PDF-1.4\n';
+    const offsets = objs.map((o, i) => { const at = out.length; out += `${i + 1} 0 obj\n${o}\nendobj\n`; return at; });
+    const xref = out.length;
+    out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offsets.map((o) => String(o).padStart(10, '0') + ' 00000 n \n').join('');
+    out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+    return new Blob([out], { type: 'application/pdf' });
+  }
+  function pngBlob() {
+    const cv = document.createElement('canvas');
+    cv.width = 960; cv.height = 600;
+    const g = cv.getContext('2d');
+    g.fillStyle = '#f6f3ea'; g.fillRect(0, 0, 960, 600);
+    g.fillStyle = '#23262a'; g.font = '600 40px Georgia, serif'; g.fillText('Q3 sales by region', 60, 84);
+    const bw = 120, gap = 48, base = 520;
+    data.forEach(([k, v], i) => {
+      const h = (v / max) * 330, x = 70 + i * (bw + gap);
+      g.fillStyle = '#2c4f6a'; g.fillRect(x, base - h, bw, h);
+      g.fillStyle = '#23262a'; g.font = '24px system-ui, sans-serif'; g.fillText(k, x, base + 36);
+      g.fillStyle = '#5d5850'; g.font = '20px system-ui, sans-serif'; g.fillText(fmt(v), x, base - h - 12);
+    });
+    return new Promise((res) => cv.toBlob(res, 'image/png'));
+  }
+  async function blobFor(k) { return k === 'csv' ? csvBlob() : k === 'pdf' ? pdfBlob() : pngBlob(); }
+
+  slot.addEventListener('click', async () => {
+    if (busy) return;
+    busy = true;
+    const k = kind;
+    const blob = await blobFor(k);
+    const url = URL.createObjectURL(blob);
+    const file = `q3-sales.${k}`;
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file;
+    link.dataset.kind = k;
+    link.textContent = file;
+    link.style.setProperty('--r', ((Math.random() - 0.5) * 6).toFixed(1) + 'deg');
+    const item = document.createElement('li');
+    item.appendChild(link);
+
+    if (!Stringless.reducedMotion) {
+      // Finish feeding the sheet, then drop it into the tray.
+      const feed = print.animate([{ translate: getComputedStyle(print).translate }, { translate: '0 0' }], { duration: 420, easing: 'cubic-bezier(.3,.6,.3,1)', fill: 'forwards' });
+      await feed.finished.catch(() => null);
+      tray.appendChild(item);
+      link.style.visibility = 'hidden';
+      await Stringless.verbs.travel(print, link, { arc: 0.25, scale: 0.3, spin: 8, duration: 620 });
+      link.style.visibility = '';
+      feed.cancel();
+      print.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: 120, fill: 'backwards' });
+    } else {
+      tray.appendChild(item);
+    }
+    Stringless.verbs.settle(link);
+    link.click();
+    Stringless.announce(`Exported ${file}. It is in the tray.`);
+    busy = false;
+  });
+</script>
+</body>
+</html>

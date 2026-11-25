@@ -1,0 +1,276 @@
+<!doctype html>
+<!--
+  Stringless example: AI suggestions as vapor. Strangeness 3.
+  What is it?            Mist that gathers after the cursor while you pause.
+  What does it touch?    Your text: it sits exactly where it would go.
+  What will it do?       Hovering the mist starts to condense it; the words sharpen toward ink.
+  What does it cost?     Light. Tab or a click condenses it into your text. Escape blows it away.
+                         Typing the same letters takes them one by one; typing something else clears it.
+  Where is it in time?   Vapor = not yours yet. Mistier words = the model is less sure of them.
+                         Accepted words land as wet ink and dry.
+  Lexicon: vapor = provisional AI output; condense = accept; ink = committed text; mist density = confidence.
+  Reduced motion: no drifting; accepting swaps the mist for ink with a brief highlight; dismissing fades it.
+  The suggestions here are canned. Wire `nextSuggestion()` to a real model.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vapor suggestions · Stringless</title>
+<link rel="stylesheet" href="../runtime/stringless.css">
+<style>
+  @property --pull { syntax: '<number>'; inherits: true; initial-value: 0; }
+  :root { color-scheme: light; --ink-c: #1d2433; --wet-c: #1b3f9e; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(800px circle at var(--sl-px, 50%) var(--sl-py, 0%), rgb(255 255 255 / .55), transparent 60%),
+      var(--sl-grain),
+      #cfd6d9;
+    background-blend-mode: normal, multiply, normal;
+    font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  .sheet {
+    width: min(620px, 92vw);
+    padding: 30px 34px 34px;
+    border-radius: 4px;
+    rotate: -.4deg;
+  }
+  .to { display: block; margin-bottom: 12px; font-size: 14px; color: #6a645a; }
+  .to b { color: #2a2620; font-weight: 600; }
+  .field { position: relative; }
+  .field textarea, .mirror {
+    display: block;
+    width: 100%;
+    min-height: 220px;
+    margin: 0;
+    padding: 4px 2px;
+    border: 0;
+    font: 19px/1.7 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    letter-spacing: 0;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    tab-size: 4;
+  }
+  .field textarea {
+    resize: none;
+    background: transparent;
+    color: var(--ink-c);
+    caret-color: var(--wet-c);
+    outline: none;
+  }
+  .field:has(textarea:focus-visible)::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: -6px;
+    height: 2px;
+    border-radius: 1px;
+    background: rgb(27 63 158 / .4);
+  }
+  .mirror {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    color: transparent;
+  }
+  .wet { color: rgb(27 63 158 / .85); text-shadow: 0 0 .6px rgb(27 63 158 / .6); transition: color 1.6s ease-out, text-shadow 1.6s ease-out; }
+  .wet.dry { color: transparent; text-shadow: none; }
+
+  .vapor { pointer-events: auto; cursor: pointer; }
+  .vapor .w {
+    --c: .5;
+    display: inline-block;
+    color: rgb(60 75 110 / calc(.26 + var(--c) * .34 + var(--pull) * .22));
+    filter: blur(calc(.45px + (1 - var(--c)) * 1.7px - var(--pull) * (1 - var(--c)) * 1.2px));
+    transition: --pull .35s ease-out;
+    white-space: pre;
+  }
+  /* After a longer pause the mist gathers on its own, so keyboard and touch users see that it can condense. */
+  .vapor.gathering { --pull: .6; }
+  /* stringcheck-disable hover-only: the keyboard twin is .gathering plus the spoken "Tab to accept" */
+  .vapor:hover { --pull: 1; }
+  /* Two slow drifts, then still: vapor at rest stays calm. */
+  .vapor .w.drift { animation: drift 2.8s ease-in-out 2 alternate; }
+  @keyframes drift {
+    from { translate: 0 0; }
+    to { translate: calc(1.5px * var(--sl-motion)) calc(-1.6px * var(--sl-motion)); }
+  }
+  .hint {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .vapor .w.drift { animation: none; }
+  }
+</style>
+</head>
+<body>
+<main class="sheet" data-sl-material="paper">
+  <label class="to" for="reply">Reply to <b>Mira</b></label>
+  <div class="field">
+    <textarea id="reply" spellcheck="false" aria-describedby="hint">Thanks for the photos from the lake. I</textarea>
+    <div class="mirror" aria-hidden="true"></div>
+  </div>
+  <p id="hint" class="hint">Suggestions appear after the cursor when you pause. Press Tab to accept one, or Escape to dismiss it.</p>
+</main>
+
+<script src="../runtime/stringless.js"></script>
+<script>
+  const ta = document.getElementById('reply');
+  const mirror = document.querySelector('.mirror');
+  let suggestion = null;   // { words: [{ text, c }] }
+  let vaporEl = null;
+  let idleTimer = 0;
+  let busy = false;
+  let wetFrom = -1, wetTo = -1, dryTimer = 0;
+  let gatherTimer = 0;
+
+  // Canned suggestions with per-word confidence. Replace with a model call.
+  const bank = [
+    { when: /\bI$/, text: [['had', .92], ['no', .9], ['idea', .86], ['the', .9], ['water', .78], ['got', .62], ['that', .55], ['still', .5], ['before', .36], ['sunrise.', .3]] },
+    { when: /[.!?]$/, text: [['Are', .8], ['you', .82], ['around', .64], ['on', .7], ['Sunday?', .42], ['We', .6], ['could', .58], ['drive', .4], ['back', .44], ['up', .5], ['early.', .3]] },
+    { when: /\S$/, text: [['and', .7], ['I', .6], ['kept', .45], ['the', .7], ['one', .55], ['with', .6], ['the', .7], ['boat.', .35]] }
+  ];
+  function nextSuggestion(before) {
+    const hit = bank.find((b) => b.when.test(before.trimEnd()) && !used.has(b));
+    if (!hit) return null;
+    used.add(hit);
+    const lead = /\s$/.test(before) ? '' : ' ';
+    return { words: hit.text.map(([text, c], i) => ({ text: (i === 0 ? lead : ' ') + text, c })) };
+  }
+  const used = new Set();
+
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const caretAtEnd = () => ta.selectionStart === ta.value.length && ta.selectionEnd === ta.value.length;
+  const suggestionText = () => (suggestion ? suggestion.words.map((w) => w.text).join('') : '');
+
+  function render() {
+    const v = ta.value;
+    let html = '';
+    if (wetFrom >= 0 && wetTo <= v.length) html = esc(v.slice(0, wetFrom)) + `<span class="wet${dryTimer ? '' : ' dry'}">${esc(v.slice(wetFrom, wetTo))}</span>` + esc(v.slice(wetTo));
+    else html = esc(v);
+    if (suggestion) {
+      // Spaces stay outside the word boxes so wrapping matches the textarea exactly.
+      html += '<span class="vapor">' + suggestion.words.map((w, i) => {
+        const lead = w.text.match(/^\s*/)[0];
+        return `${lead}<span class="w drift" style="--c:${w.c};animation-delay:${-(i * 0.37) % 2.8}s">${esc(w.text.slice(lead.length))}</span>`;
+      }).join('') + '</span>';
+    }
+    mirror.innerHTML = html + '\u200b';
+    mirror.scrollTop = ta.scrollTop;
+    vaporEl = mirror.querySelector('.vapor');
+    clearTimeout(gatherTimer);
+    if (vaporEl) {
+      vaporEl.addEventListener('click', () => accept(), { once: true });
+      gatherTimer = setTimeout(() => vaporEl && vaporEl.classList.add('gathering'), 2400);
+    }
+  }
+
+  function show() {
+    if (suggestion || busy || document.activeElement !== ta || !caretAtEnd()) return;
+    suggestion = nextSuggestion(ta.value);
+    if (!suggestion) return;
+    render();
+    if (!Stringless.reducedMotion) {
+      [...vaporEl.querySelectorAll('.w')].forEach((w, i) => w.animate(
+        [{ opacity: 0, filter: 'blur(6px)', translate: '6px 3px' }, { opacity: 1 }],
+        { duration: 700, delay: i * 55, easing: 'cubic-bezier(.2,.6,.3,1)', fill: 'backwards', composite: 'add' }
+      ));
+    }
+    const said = suggestionText().trim();
+    Stringless.announce('Suggestion: ' + said + (/[.!?]$/.test(said) ? '' : '.') + ' Tab to accept.');
+  }
+
+  async function accept() {
+    if (!suggestion || busy) return;
+    busy = true;
+    const text = suggestionText();
+    const words = [...vaporEl.querySelectorAll('.w')];
+    if (!Stringless.reducedMotion) {
+      const ink = getComputedStyle(document.documentElement).getPropertyValue('--wet-c').trim() || '#1b3f9e';
+      await Promise.all(words.map((w, i) => {
+        w.classList.remove('drift');
+        return w.animate([{}, { color: ink, filter: 'blur(0px)', translate: '0 0' }], { duration: 260, delay: i * 45, easing: 'cubic-bezier(.3,.7,.2,1)', fill: 'forwards' }).finished.catch(() => null);
+      }));
+    }
+    suggestion = null;
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+    const start = ta.value.length;
+    if (!document.execCommand('insertText', false, text)) ta.setRangeText(text, start, start, 'end');
+    wetFrom = start; wetTo = ta.value.length;
+    clearTimeout(dryTimer);
+    dryTimer = 1;
+    render();
+    requestAnimationFrame(() => {
+      dryTimer = setTimeout(() => { dryTimer = 0; const w = mirror.querySelector('.wet'); if (w) w.classList.add('dry'); }, 900);
+    });
+    Stringless.sound.play('ink');
+    Stringless.announce('Accepted.');
+    busy = false;
+    schedule();
+  }
+
+  async function dismiss(quiet) {
+    if (!suggestion || busy) return;
+    busy = true;
+    const words = vaporEl ? [...vaporEl.querySelectorAll('.w')] : [];
+    if (words.length) {
+      const k = Stringless.reducedMotion
+        ? [{ opacity: 1 }, { opacity: 0 }]
+        : [{ opacity: 1 }, { opacity: 0, filter: 'blur(7px)', translate: '26px -7px' }];
+      await Promise.all(words.map((w, i) => w.animate(k, { duration: quiet ? 180 : 420, delay: (quiet ? 0 : i * 30), easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' }).finished.catch(() => null)));
+    }
+    suggestion = null;
+    render();
+    busy = false;
+    if (!quiet) Stringless.announce('Suggestion dismissed.');
+  }
+
+  // Typing the suggestion's next letters takes them; anything else clears it.
+  ta.addEventListener('beforeinput', (e) => {
+    if (!suggestion || busy) return;
+    if (e.inputType === 'insertText' && e.data) {
+      const s = suggestionText();
+      if (s.startsWith(e.data)) {
+        let rest = e.data.length;
+        while (rest > 0 && suggestion.words.length) {
+          const w = suggestion.words[0];
+          if (w.text.length <= rest) { rest -= w.text.length; suggestion.words.shift(); }
+          else { w.text = w.text.slice(rest); rest = 0; }
+        }
+        if (!suggestion.words.length) suggestion = null;
+        return;
+      }
+    }
+    dismiss(true);
+  });
+  ta.addEventListener('input', () => {
+    if (wetFrom >= 0 && ta.value.length < wetTo) { wetFrom = wetTo = -1; }
+    render();
+    schedule();
+  });
+  ta.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab' && !e.shiftKey && suggestion && caretAtEnd()) { e.preventDefault(); accept(); }
+    else if (e.key === 'Escape' && suggestion) { e.preventDefault(); dismiss(false); }
+  });
+  ta.addEventListener('scroll', () => { mirror.scrollTop = ta.scrollTop; });
+  ta.addEventListener('blur', () => clearTimeout(idleTimer));
+  ta.addEventListener('focus', schedule);
+  document.addEventListener('selectionchange', () => { if (suggestion && document.activeElement === ta && !caretAtEnd()) dismiss(true); });
+
+  function schedule() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(show, 900);
+  }
+
+  render();
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  schedule();
+</script>
+</body>
+</html>

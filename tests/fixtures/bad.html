@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+<style>
+  .btn:hover { background: red; }
+  .btn:focus { outline: none; }
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { rotate: 360deg; } }
+</style>
+</head>
+<body>
+  <button class="btn">Submit</button>
+  <button class="icon"><svg viewBox="0 0 10 10"><path d="M0 0h10"/></svg></button>
+  <div class="card" onclick="open()">Card</div>
+  <div data-sl-verb="delete" data-sl-target="closest(.card)">Delete</div>
+  <button data-sl-verb="burn" aria-label="Burn note" data-sl-weight="heavy"></button>
+  <a href="/more">Learn more</a>
+  <input type="email" placeholder="you@example.com">
+  <script>
+    document.addEventListener('sl:rehearse', () => { fetch('/api/track'); });
+  </script>
+</body>
+</html>

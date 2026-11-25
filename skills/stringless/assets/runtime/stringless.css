@@ -1,0 +1,457 @@
+/*! Stringless runtime styles 0.1.0 | MIT | https://github.com/BaselAshraf81/stringless
+ *
+ * Materials, phases, default target previews, captions, remnants and tethers.
+ * Works without the script (static materials and phases); the script adds light,
+ * proximity, rehearsal and memory. Override any --sl-* variable to fit DESIGN.md.
+ */
+
+@property --sl-near { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --sl-rehearse { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --sl-hold { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --sl-intensity { syntax: '<number>'; inherits: true; initial-value: 1; }
+@property --sl-fluency { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --sl-wear { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --sl-life { syntax: '<number>'; inherits: true; initial-value: 1; }
+@property --sl-wet { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --sl-frost { syntax: '<length>'; inherits: true; initial-value: 0px; }
+
+:root {
+  /* Travel multiplier. Multiply every translate distance by it; it drops to 0 under reduced motion. */
+  --sl-motion: 1;
+
+  /* Spring presets as CSS easings (generated from the runtime's physics table). */
+  --sl-ease-paper: linear(0, 0.191, 0.556, 0.878, 1.072, 1.139, 1.123, 1.074, 1.026, 0.994, 0.981, 0.982, 0.988, 0.995, 1, 1.002, 1.003, 1);
+  --sl-dur-paper: 479ms;
+  --sl-ease-ink: linear(0, 0.041, 0.131, 0.239, 0.349, 0.451, 0.543, 0.622, 0.689, 0.745, 0.792, 0.831, 0.862, 0.888, 0.909, 0.927, 0.941, 0.952, 0.961, 0.968, 0.975, 0.979, 0.983, 0.987, 0.989, 0.991, 0.993, 0.994, 0.995, 0.996, 0.997, 0.998, 1);
+  --sl-dur-ink: 883ms;
+  --sl-ease-glass: linear(0, 0.275, 0.81, 1.233, 1.372, 1.269, 1.069, 0.912, 0.861, 0.901, 0.975, 1.033, 1.052, 1.037, 1.009, 0.988, 0.981, 0.986, 0.997, 1.005, 1.007, 1.005, 1.001, 0.998, 0.997, 1);
+  --sl-dur-glass: 687ms;
+  --sl-ease-metal: linear(0, 0.042, 0.141, 0.265, 0.393, 0.514, 0.621, 0.712, 0.787, 0.847, 0.893, 0.928, 0.953, 0.972, 0.985, 0.993, 0.999, 1.002, 1.003, 1.004, 1.004, 1.004, 1.004, 1.003, 1.002, 1);
+  --sl-dur-metal: 692ms;
+  --sl-ease-rubber: linear(0, 0.153, 0.512, 0.919, 1.242, 1.409, 1.413, 1.296, 1.123, 0.96, 0.852, 0.816, 0.842, 0.908, 0.983, 1.043, 1.075, 1.076, 1.055, 1.024, 0.993, 0.973, 0.966, 0.971, 0.983, 0.996, 1.008, 1.014, 1.014, 1.01, 1.005, 0.999, 0.995, 0.994, 0.995, 0.997, 0.999, 1.001, 1.003, 1.003, 1);
+  --sl-dur-rubber: 1362ms;
+  --sl-ease-clay: linear(0, 0.03, 0.1, 0.187, 0.279, 0.369, 0.452, 0.528, 0.595, 0.654, 0.705, 0.749, 0.787, 0.819, 0.846, 0.87, 0.89, 0.907, 0.921, 0.933, 0.943, 0.952, 0.959, 0.966, 0.971, 0.975, 0.979, 0.982, 0.985, 0.987, 0.989, 0.991, 0.992, 0.994, 0.995, 0.995, 0.996, 0.997, 0.997, 0.998, 1);
+  --sl-dur-clay: 1212ms;
+  --sl-ease-liquid: linear(0, 0.117, 0.401, 0.743, 1.052, 1.268, 1.367, 1.358, 1.271, 1.147, 1.023, 0.926, 0.872, 0.86, 0.883, 0.926, 0.974, 1.015, 1.042, 1.052, 1.048, 1.035, 1.017, 1, 0.988, 0.981, 0.981, 0.985, 0.991, 0.998, 1.003, 1.006, 1.007, 1.006, 1.004, 1.002, 1, 0.998, 0.997, 0.997, 1);
+  --sl-dur-liquid: 1842ms;
+  --sl-ease-ice: linear(0, 0.124, 0.358, 0.586, 0.762, 0.88, 0.952, 0.99, 1.006, 1.012, 1.011, 1.008, 1.006, 1.003, 1);
+  --sl-dur-ice: 333ms;
+  --sl-ease-stone: linear(0, 0.032, 0.108, 0.205, 0.309, 0.412, 0.507, 0.592, 0.667, 0.731, 0.784, 0.829, 0.865, 0.895, 0.918, 0.937, 0.952, 0.963, 0.973, 0.979, 0.985, 0.989, 0.992, 0.994, 0.996, 0.997, 1);
+  --sl-dur-stone: 717ms;
+  --sl-ease-cloth: linear(0, 0.05, 0.173, 0.332, 0.5, 0.657, 0.793, 0.902, 0.983, 1.038, 1.071, 1.085, 1.087, 1.08, 1.068, 1.053, 1.039, 1.026, 1.014, 1.006, 0.999, 0.995, 0.993, 0.992, 0.993, 0.993, 0.995, 0.996, 0.997, 1);
+  --sl-dur-cloth: 808ms;
+  --sl-ease-wax: linear(0, 0.04, 0.128, 0.232, 0.337, 0.435, 0.522, 0.598, 0.663, 0.718, 0.765, 0.804, 0.837, 0.864, 0.887, 0.906, 0.922, 0.935, 0.946, 0.955, 0.962, 0.969, 0.974, 0.978, 0.982, 0.985, 0.988, 0.99, 0.991, 0.993, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 1);
+  --sl-dur-wax: 996ms;
+  --sl-ease-light: linear(0, 0.094, 0.277, 0.464, 0.622, 0.744, 0.832, 0.893, 0.933, 0.96, 0.976, 0.986, 0.992, 0.996, 1);
+  --sl-dur-light: 225ms;
+  --sl-ease-vapor: linear(0, 0.023, 0.078, 0.151, 0.233, 0.315, 0.396, 0.471, 0.54, 0.602, 0.658, 0.707, 0.749, 0.786, 0.818, 0.846, 0.87, 0.89, 0.907, 0.921, 0.934, 0.944, 0.953, 0.961, 0.967, 0.972, 0.977, 0.98, 0.984, 0.986, 0.988, 0.99, 0.992, 0.993, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 1);
+  --sl-dur-vapor: 1192ms;
+  --sl-ease-default: linear(0, 0.082, 0.259, 0.459, 0.64, 0.785, 0.891, 0.961, 1.002, 1.023, 1.03, 1.029, 1.024, 1.018, 1.013, 1.008, 1.004, 1);
+  --sl-dur-default: 479ms;
+
+  /* Material colors. Physical materials keep their own color in light and dark pages. */
+  --sl-paper: #f2eee4;
+  --sl-paper-ink: #2a2620;
+  --sl-ink: #1c2538;
+  --sl-graphite: #6f7175;
+  --sl-metal-hi: #d4d9df;
+  --sl-metal-lo: #868d97;
+  --sl-rubber: #ec8c84;
+  --sl-clay: #b9b3a6;
+  --sl-liquid: #2f7dd6;
+  --sl-ice: #dcecf6;
+  --sl-ember: #ff7a2e;
+  --sl-char: #231915;
+  --sl-ash: #4b4744;
+  --sl-stone: #8e8a84;
+  --sl-cloth: #3d4a5c;
+  --sl-wax: #8a2333;
+  --sl-glow: #ffd37a;
+  --sl-refuse: #c8473a;
+  --sl-tether: currentColor;
+  --sl-focus: #3b82f6;
+
+  /* Procedural textures as data URIs: no requests, no script. */
+  --sl-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --sl-fiber: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.045 .16' numOctaves='3' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .4 0 0 0 0 .32 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  --sl-speckle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.6' numOctaves='1' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 .25 0 0 0 0 .25 0 0 0 0 .25 0 0 0 -22 8.6'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --sl-motion: 0; }
+}
+
+/* ------------------------------------------------------------------ controls */
+
+[data-sl-verb] {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  user-select: none;
+  cursor: pointer;
+}
+[data-sl-verb]:focus-visible {
+  outline: 2px solid var(--sl-focus);
+  outline-offset: 3px;
+}
+/* Lean toward the target as the pointer approaches. Opt in with data-sl-lean. */
+[data-sl-lean] {
+  translate: calc(var(--sl-tdx, 0) * var(--sl-near) * 3px * var(--sl-motion)) calc(var(--sl-tdy, 0) * var(--sl-near) * 3px * var(--sl-motion));
+}
+/* Invisible 44px minimum hit area for small or oddly shaped controls. */
+.sl-hit { position: relative; }
+.sl-hit::before {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  translate: -50% -50%;
+}
+
+/* ------------------------------------------------------------------ materials
+ * Each material is a surface (background, edge, shadow) plus a light response.
+ * --sl-lx / --sl-ly come from the runtime (pointer position in % of the element).
+ */
+
+[data-sl-material] {
+  --_lx: calc(var(--sl-lx, 30) * 1%);
+  --_ly: calc(var(--sl-ly, 18) * 1%);
+}
+
+[data-sl-material="paper"] {
+  background:
+    radial-gradient(140% 110% at var(--_lx) var(--_ly), rgb(255 255 255 / .5), transparent 62%),
+    var(--sl-fiber),
+    var(--sl-grain),
+    var(--sl-paper);
+  background-blend-mode: soft-light, multiply, multiply, normal;
+  color: var(--sl-paper-ink);
+  box-shadow:
+    0 1px 1px rgb(40 30 20 / .14),
+    0 calc(3px + var(--sl-near) * 6px) calc(8px + var(--sl-near) * 14px) rgb(40 30 20 / calc(.14 + var(--sl-near) * .08));
+}
+
+[data-sl-material="ink"] {
+  background:
+    radial-gradient(70% 60% at var(--_lx) var(--_ly), rgb(190 210 255 / calc(.08 + var(--sl-wet) * .32)), transparent 62%),
+    var(--sl-ink);
+  color: #eef0f6;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / calc(.06 + var(--sl-wet) * .18)), 0 2px 6px rgb(0 0 0 / .3);
+}
+
+[data-sl-material="graphite"] {
+  background:
+    radial-gradient(90% 70% at var(--_lx) var(--_ly), rgb(255 255 255 / .22), transparent 60%),
+    repeating-linear-gradient(-28deg, rgb(0 0 0 / .07) 0 1px, transparent 1px 3px),
+    var(--sl-grain),
+    color-mix(in srgb, var(--sl-graphite) 30%, var(--sl-paper));
+  background-blend-mode: soft-light, normal, multiply, normal;
+  color: #33343a;
+}
+
+[data-sl-material="glass"] {
+  background:
+    radial-gradient(70% 55% at var(--_lx) var(--_ly), rgb(255 255 255 / .42), transparent 58%),
+    linear-gradient(135deg, rgb(255 255 255 / .2), rgb(255 255 255 / .04) 60%, rgb(255 255 255 / .1));
+  -webkit-backdrop-filter: blur(var(--sl-frost)) saturate(1.25);
+  backdrop-filter: blur(var(--sl-frost)) saturate(1.25);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .55),
+    inset 0 0 0 1px rgb(255 255 255 / .22),
+    0 10px 28px rgb(0 0 0 / .16);
+}
+
+[data-sl-material="metal"] {
+  background:
+    linear-gradient(100deg, transparent calc(var(--_lx) - 22%), rgb(255 255 255 / .62) var(--_lx), transparent calc(var(--_lx) + 22%)),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / .06) 0 1px, rgb(0 0 0 / .06) 1px 2px),
+    linear-gradient(180deg, var(--sl-metal-hi), var(--sl-metal-lo));
+  color: #1d2126;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .7),
+    inset 0 -1px 0 rgb(0 0 0 / .28),
+    0 2px 5px rgb(0 0 0 / .32);
+}
+
+[data-sl-material="rubber"] {
+  background:
+    radial-gradient(90% 80% at var(--_lx) var(--_ly), rgb(255 255 255 / .16), transparent 60%),
+    var(--sl-grain),
+    var(--sl-rubber);
+  background-blend-mode: normal, soft-light, normal;
+  color: #3b1d1a;
+  box-shadow:
+    inset 0 2px 0 rgb(255 255 255 / .25),
+    inset 0 -4px 0 rgb(0 0 0 / .14),
+    0 3px 8px rgb(0 0 0 / .18);
+}
+
+[data-sl-material="clay"] {
+  background:
+    radial-gradient(100% 90% at var(--_lx) var(--_ly), rgb(255 255 255 / .2), transparent 62%),
+    var(--sl-grain),
+    var(--sl-clay);
+  background-blend-mode: normal, multiply, normal;
+  color: #2f2c26;
+  box-shadow:
+    inset 3px 3px 6px rgb(255 255 255 / .32),
+    inset -4px -4px 8px rgb(0 0 0 / .16),
+    0 4px 10px rgb(0 0 0 / .16);
+}
+
+[data-sl-material="liquid"] {
+  background:
+    radial-gradient(45% 35% at var(--_lx) var(--_ly), rgb(255 255 255 / .55), transparent 70%),
+    radial-gradient(80% 60% at calc(100% - var(--_lx)) calc(100% - var(--_ly)), rgb(0 20 60 / .3), transparent 70%),
+    var(--sl-liquid);
+  color: #fff;
+  box-shadow: inset 0 -6px 14px rgb(0 0 0 / .18), 0 4px 14px color-mix(in srgb, var(--sl-liquid) 45%, transparent);
+}
+
+[data-sl-material="ice"] {
+  background:
+    radial-gradient(60% 50% at var(--_lx) var(--_ly), rgb(255 255 255 / .75), transparent 55%),
+    var(--sl-speckle),
+    linear-gradient(160deg, color-mix(in srgb, var(--sl-ice) 70%, #fff), color-mix(in srgb, var(--sl-ice) 80%, #7fb2d6));
+  background-blend-mode: normal, soft-light, normal;
+  color: #20435c;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .7), inset 0 -10px 18px rgb(110 165 205 / .35), 0 6px 16px rgb(40 90 130 / .2);
+}
+
+[data-sl-material="ember"] {
+  --_heat: max(var(--sl-near), var(--sl-hold), var(--sl-rehearse));
+  background:
+    radial-gradient(70% 80% at 50% 110%, rgb(255 120 40 / calc(.22 + var(--_heat) * .55)), transparent 72%),
+    var(--sl-grain),
+    var(--sl-char);
+  background-blend-mode: screen, soft-light, normal;
+  color: #ffd8b0;
+  box-shadow:
+    inset 0 1px 0 rgb(255 190 140 / .14),
+    0 0 calc(var(--_heat) * 26px) rgb(255 110 30 / calc(var(--_heat) * .55));
+}
+
+[data-sl-material="ash"] {
+  background:
+    radial-gradient(40% 60% at 50% 80%, rgb(255 110 40 / calc(var(--sl-life) * .55)), transparent 70%),
+    var(--sl-speckle),
+    var(--sl-grain),
+    var(--sl-ash);
+  background-blend-mode: screen, soft-light, multiply, normal;
+  color: #d8d2cc;
+}
+
+[data-sl-material="stone"] {
+  background:
+    radial-gradient(90% 80% at var(--_lx) var(--_ly), rgb(255 255 255 / .16), transparent 60%),
+    var(--sl-speckle),
+    var(--sl-grain),
+    var(--sl-stone);
+  background-blend-mode: normal, multiply, multiply, normal;
+  color: #23221f;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .2), inset 0 -2px 0 rgb(0 0 0 / .2), 0 5px 12px rgb(0 0 0 / .3);
+}
+
+[data-sl-material="cloth"] {
+  background:
+    radial-gradient(120% 90% at var(--_lx) var(--_ly), rgb(255 255 255 / .14), transparent 60%),
+    repeating-linear-gradient(0deg, rgb(255 255 255 / .05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgb(0 0 0 / .1) 0 1px, transparent 1px 3px),
+    var(--sl-cloth);
+  color: #e9edf3;
+  box-shadow: 0 6px 18px rgb(0 0 0 / .22);
+}
+
+[data-sl-material="wax"] {
+  background:
+    radial-gradient(45% 40% at var(--_lx) var(--_ly), rgb(255 255 255 / .38), transparent 70%),
+    radial-gradient(90% 90% at 50% 50%, color-mix(in srgb, var(--sl-wax) 70%, #fff 8%), var(--sl-wax) 70%, color-mix(in srgb, var(--sl-wax) 70%, #000));
+  color: #f6dfe2;
+  box-shadow: inset 0 -3px 6px rgb(0 0 0 / .3), inset 0 2px 3px rgb(255 255 255 / .2), 0 3px 8px rgb(0 0 0 / .3);
+}
+
+[data-sl-material="light"] {
+  background: radial-gradient(circle at 50% 45%, #fffaf0, var(--sl-glow) 42%, color-mix(in srgb, var(--sl-glow) 0%, transparent) 72%);
+  color: #3a2a06;
+  box-shadow: 0 0 calc(14px + var(--sl-near) * 18px) color-mix(in srgb, var(--sl-glow) 70%, transparent);
+}
+
+[data-sl-material="vapor"] {
+  background: radial-gradient(80% 70% at var(--_lx) var(--_ly), rgb(255 255 255 / .22), rgb(255 255 255 / .06) 70%);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  filter: blur(.3px);
+}
+
+/* Wear from use: polish on hard materials, softened edges on soft ones. */
+[data-sl-id][data-sl-material="metal"],
+[data-sl-id][data-sl-material="stone"],
+[data-sl-id][data-sl-material="wax"] {
+  filter: brightness(calc(1 + var(--sl-wear) * .1)) contrast(calc(1 + var(--sl-wear) * .06));
+}
+[data-sl-id][data-sl-material="paper"],
+[data-sl-id][data-sl-material="cloth"] {
+  filter: sepia(calc(var(--sl-wear) * .18));
+}
+
+/* ------------------------------------------------------------------ phases
+ * State as a phase of matter. Phases use filters and variables, not pseudo-elements,
+ * so they layer on top of any component.
+ */
+
+[data-sl-phase="wet"] { --sl-wet: 1; }
+[data-sl-phase="dry"] { --sl-wet: 0; }
+[data-sl-phase="frozen"] { filter: url(#sl-frost) saturate(.45) brightness(1.06); }
+[data-sl-phase="cracked"] { filter: url(#sl-crack) drop-shadow(0 0 1px var(--sl-refuse)); }
+[data-sl-phase="vapor"] { filter: blur(1.4px); opacity: .72; }
+[data-sl-phase="ash"] { filter: grayscale(1) brightness(.62) contrast(.9); opacity: .7; }
+[data-sl-phase="crystal"] { filter: saturate(1.08) brightness(1.04) drop-shadow(0 0 .5px rgb(255 255 255 / .9)); }
+[data-sl-phase="liquid"] { animation: sl-churn 2.4s ease-in-out infinite; }
+[data-sl-phase="vapor"] { animation: sl-drift 3.2s ease-in-out infinite alternate; }
+
+@keyframes sl-churn {
+  0%, 100% { filter: hue-rotate(0deg) brightness(1); }
+  50% { filter: hue-rotate(-8deg) brightness(1.06); }
+}
+@keyframes sl-drift {
+  from { translate: 0 0; }
+  to { translate: 0 calc(-3px * var(--sl-motion)); }
+}
+
+/* ------------------------------------------------------------------ default previews
+ * Quick, honest rehearsals on targets. Prefer a bespoke preview per verb;
+ * these use the individual transform properties so they never clobber `transform`.
+ * --sl-rehearse: 0 at rest, ~.35 on approach, 1 on hover/focus/hold.
+ */
+
+[data-sl-preview] {
+  --_r: calc(var(--sl-rehearse) * var(--sl-intensity));
+  transition: --sl-rehearse .22s ease-out;
+}
+[data-sl-preview="delete"],
+[data-sl-preview="burn"] {
+  filter: sepia(calc(var(--_r) * .45 + var(--sl-hold) * .4)) saturate(calc(1 + var(--_r) * .5)) brightness(calc(1 - var(--sl-hold) * .3));
+  rotate: calc(var(--_r) * -.35deg * var(--sl-motion));
+}
+[data-sl-preview="remove"],
+[data-sl-preview="move"] {
+  translate: 0 calc(var(--_r) * -5px * var(--sl-motion));
+  filter: drop-shadow(0 calc(var(--_r) * 8px) calc(var(--_r) * 10px) rgb(0 0 0 / calc(var(--_r) * .22)));
+}
+[data-sl-preview="archive"] {
+  filter: saturate(calc(1 - var(--_r) * .5)) brightness(calc(1 + var(--_r) * .04));
+  scale: 1 calc(1 - var(--_r) * .035 * var(--sl-motion));
+  transform-origin: 50% 0;
+}
+[data-sl-preview="send"] {
+  translate: calc(var(--_r) * 10px * var(--sl-motion)) calc(var(--_r) * -3px * var(--sl-motion));
+  rotate: calc(var(--_r) * -1deg * var(--sl-motion));
+}
+[data-sl-preview="copy"],
+[data-sl-preview="duplicate"] {
+  filter: drop-shadow(calc(var(--_r) * 6px) calc(var(--_r) * 6px) 0 rgb(40 70 170 / calc(var(--_r) * .32)));
+}
+[data-sl-preview="share"] {
+  filter:
+    drop-shadow(calc(var(--_r) * -7px) calc(var(--_r) * 5px) 0 rgb(120 120 120 / calc(var(--_r) * .22)))
+    drop-shadow(calc(var(--_r) * 7px) calc(var(--_r) * 5px) 0 rgb(120 120 120 / calc(var(--_r) * .22)));
+}
+[data-sl-preview="save"] {
+  --sl-wet: calc(1 + var(--_r) * .6);
+  filter: contrast(calc(1 + var(--_r) * .06));
+}
+[data-sl-preview="hide"],
+[data-sl-preview="private"] {
+  filter: blur(calc(var(--_r) * 3px));
+}
+[data-sl-preview="lock"] {
+  filter: saturate(calc(1 - var(--_r) * .6));
+  scale: calc(1 - var(--_r) * .015);
+}
+[data-sl-preview="pin"] {
+  translate: 0 calc(var(--_r) * 1px * var(--sl-motion));
+  filter: drop-shadow(0 calc(1px + (1 - var(--_r)) * 4px) calc(1px + (1 - var(--_r)) * 6px) rgb(0 0 0 / .28));
+}
+[data-sl-preview="favorite"],
+[data-sl-preview="like"] {
+  filter: drop-shadow(0 0 calc(var(--_r) * 10px) rgb(255 170 60 / calc(var(--_r) * .6))) saturate(calc(1 + var(--_r) * .3));
+}
+[data-sl-preview="publish"] {
+  translate: 0 calc(var(--_r) * -2px * var(--sl-motion));
+  filter: drop-shadow(0 0 calc(var(--_r) * 1.5px) currentColor);
+}
+[data-sl-preview="expand"] { scale: calc(1 + var(--_r) * .015); }
+[data-sl-preview="restore"],
+[data-sl-preview="undo"] { filter: saturate(calc(1 + var(--_r) * .25)) brightness(calc(1 + var(--_r) * .05)); }
+
+/* ------------------------------------------------------------------ captions: strings on demand */
+
+.sl-caption {
+  position: fixed;
+  z-index: 2147483001;
+  pointer-events: none;
+  translate: -50% 3px;
+  max-width: min(28ch, 80vw);
+  padding: 5px 9px;
+  border-radius: 7px;
+  font: 500 12.5px/1.25 system-ui, sans-serif;
+  letter-spacing: .01em;
+  color: var(--sl-caption-ink, #fbfaf7);
+  background: var(--sl-caption-bg, rgb(24 22 20 / .9));
+  box-shadow: 0 4px 14px rgb(0 0 0 / .24);
+  opacity: 0;
+  transition: opacity .16s ease-out, translate .16s ease-out;
+  white-space: normal;
+  text-align: center;
+}
+.sl-caption[data-show] { opacity: 1; translate: -50% 0; }
+
+/* ------------------------------------------------------------------ tethers */
+
+.sl-tethers {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2147482999;
+  overflow: visible;
+}
+.sl-tethers path {
+  fill: none;
+  stroke: var(--sl-tether);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 2 6;
+  opacity: .75;
+  animation: sl-flow .9s linear infinite;
+}
+@keyframes sl-flow { to { stroke-dashoffset: -16; } }
+
+/* ------------------------------------------------------------------ remnants (echo / undo) */
+
+.sl-remnant {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.sl-remnant[data-sl-material="ash"] {
+  opacity: calc(.45 + var(--sl-life) * .55);
+}
+.sl-remnant:focus-visible { outline: 2px solid var(--sl-focus); outline-offset: 3px; }
+
+/* ------------------------------------------------------------------ reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-sl-phase="liquid"],
+  [data-sl-phase="vapor"],
+  .sl-tethers path { animation: none; }
+  [data-sl-preview] { transition-duration: 1ms; }
+}

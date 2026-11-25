@@ -1,0 +1,180 @@
+<!doctype html>
+<!--
+  Stringless example: ember delete with ash undo. Strangeness 3.
+  What is it?            A charred corner on each note card, with a faint warm seam.
+  What does it touch?    Its own card. The seam brightens as the pointer approaches.
+  What will it do?       On hover or focus the card starts to char from that corner.
+  What does it cost?     Heavy. Hold while the burn spreads, or press twice. Release early and it cools.
+  Where is it in time?   The burnt card falls as ash. The ash pile stays for 7 seconds, cooling;
+                         press it and the card rises back out of the ash.
+  Lexicon: ember = destroys; ash = what is left, and the way back; cooling ash = time running out.
+  Reduced motion: no falling shards; the card fades to ash color in place and the pile appears.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ember delete · Stringless</title>
+<link rel="stylesheet" href="../runtime/stringless.css">
+<style>
+  :root { color-scheme: dark; --char: #1d1410; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(640px circle at var(--sl-px, 50%) var(--sl-py, 20%), rgb(255 214 160 / .07), transparent 62%),
+      var(--sl-grain),
+      #1f2226;
+    background-blend-mode: normal, soft-light, normal;
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    overflow: hidden;
+  }
+  .stack { display: grid; gap: 16px; width: min(420px, 86vw); padding: 24px 0; }
+  .card {
+    position: relative;
+    padding: 22px 56px 24px 24px;
+    border-radius: 4px;
+    font-size: 17px;
+    line-height: 1.5;
+    overflow: hidden;
+  }
+  .card:nth-child(1) { rotate: -.8deg; }
+  .card:nth-child(2) { rotate: .6deg; }
+  .card:nth-child(3) { rotate: -.3deg; }
+  .card p { margin: 0; position: relative; z-index: 0; }
+
+  /* The burn front: a radial edge from the notch corner, roughened by an SVG displacement. */
+  .burn {
+    --b: calc(var(--sl-rehearse) * var(--sl-intensity) * .1 + var(--sl-hold) * 1.15);
+    position: absolute; inset: -12px;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(circle at calc(100% - 12px) 12px,
+      var(--char) calc(var(--b) * 100% - 7%),
+      #5a210b calc(var(--b) * 100% - 4%),
+      rgb(255 140 50 / .95) calc(var(--b) * 100% - 1.5%),
+      rgb(255 190 110 / .35) calc(var(--b) * 100%),
+      transparent calc(var(--b) * 100% + 5%));
+    filter: url(#burn-edge);
+    opacity: min(1, calc(var(--b) * 14));
+  }
+  .card[data-sl-armed] .burn { --b: .32; }
+
+  .notch {
+    all: unset;
+    position: absolute; top: 0; right: 0;
+    width: 48px; height: 48px;
+    z-index: 2;
+    cursor: pointer;
+    background: none;
+    box-shadow: none;
+  }
+  .notch:focus-visible { outline: 2px solid #ffb36b; outline-offset: -4px; border-radius: 6px; }
+  .char {
+    position: absolute; top: 0; right: 0;
+    width: 34px; height: 34px;
+    clip-path: polygon(0 0, 100% 0, 100% 100%);
+    background:
+      linear-gradient(225deg, transparent 47%, rgb(255 140 50 / calc(.25 + var(--sl-near) * .75)) 49.5%, transparent 53%),
+      radial-gradient(80% 80% at 100% 0%, rgb(255 110 30 / calc(var(--sl-near) * .5)), transparent 70%),
+      var(--sl-grain),
+      var(--char);
+    background-blend-mode: screen, screen, soft-light, normal;
+    filter: drop-shadow(0 0 calc(var(--sl-near) * 6px) rgb(255 120 40 / calc(var(--sl-near) * .8)));
+    transition: filter .2s;
+  }
+
+  /* The ash pile: the remnant, and the undo. Its embers cool as the window closes. */
+  .ash {
+    width: 100%;
+    height: 56px;
+    border-radius: 6px;
+    background: none !important;
+    box-shadow: none !important;
+    display: grid;
+    place-items: center;
+  }
+  .ash .heap {
+    width: 62%;
+    height: 22px;
+    clip-path: polygon(0 100%, 6% 70%, 14% 62%, 22% 40%, 31% 46%, 40% 22%, 49% 30%, 57% 12%, 66% 34%, 74% 28%, 83% 52%, 92% 64%, 100% 100%);
+    background:
+      radial-gradient(3px 3px at 30% 70%, rgb(255 130 50 / var(--sl-life)), transparent),
+      radial-gradient(2px 2px at 55% 40%, rgb(255 170 80 / var(--sl-life)), transparent),
+      radial-gradient(3px 2px at 72% 65%, rgb(255 120 40 / var(--sl-life)), transparent),
+      radial-gradient(60% 90% at 50% 100%, rgb(255 100 30 / calc(var(--sl-life) * .35)), transparent 80%),
+      var(--sl-speckle),
+      linear-gradient(#5d5752, #35312e);
+    background-blend-mode: screen, screen, screen, screen, soft-light, normal;
+    scale: calc(1 + var(--sl-near) * .04 * var(--sl-motion));
+    transition: scale .3s;
+  }
+  .ash[data-sl-state="rehearse"] .heap { filter: brightness(1.25); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="burn-edge" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="2"/>
+    <feDisplacementMap in="SourceGraphic" scale="26" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<main class="stack" aria-label="Notes">
+  <article class="card" data-sl-material="paper">
+    <p>Call the tiler about the bathroom grout before Thursday.</p>
+    <span class="burn" aria-hidden="true"></span>
+    <button class="notch" type="button" data-sl-verb="delete" data-sl-weight="heavy" data-sl-target="closest(.card)" data-sl-radius="90" aria-label="Burn note"><span class="char" aria-hidden="true"></span></button>
+  </article>
+  <article class="card" data-sl-material="paper">
+    <p>Mira lands at 18:40, terminal 2. Bring the spare key and the blue scarf she forgot.</p>
+    <span class="burn" aria-hidden="true"></span>
+    <button class="notch" type="button" data-sl-verb="delete" data-sl-weight="heavy" data-sl-target="closest(.card)" data-sl-radius="90" aria-label="Burn note"><span class="char" aria-hidden="true"></span></button>
+  </article>
+  <article class="card" data-sl-material="paper">
+    <p>Library books back by Monday. The one about bees is already late.</p>
+    <span class="burn" aria-hidden="true"></span>
+    <button class="notch" type="button" data-sl-verb="delete" data-sl-weight="heavy" data-sl-target="closest(.card)" data-sl-radius="90" aria-label="Burn note"><span class="char" aria-hidden="true"></span></button>
+  </article>
+</main>
+
+<script src="../runtime/stringless.js"></script>
+<script>
+  document.addEventListener('sl:commit', async (e) => {
+    const notch = e.target.closest('.notch');
+    if (!notch) return;
+    const card = notch.closest('.card');
+    const n = notch.getBoundingClientRect();
+    const height = card.offsetHeight;
+    const shards = await Stringless.verbs.shatter(card, { tint: 'ash', origin: { x: n.right, y: n.top } });
+
+    // Close the gap the card leaves, then leave the ash where it stood.
+    const gap = card.animate([{ height: height + 'px', marginBottom: '0px' }, { height: '0px', marginBottom: '-16px' }], { duration: Stringless.reducedMotion ? 1 : 320, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+    await gap.finished;
+    card.hidden = true;
+    gap.cancel();
+
+    Stringless.remnant({
+      anchor: card,
+      material: 'ash',
+      className: 'ash',
+      label: 'Restore note',
+      restoredText: 'Note restored.',
+      announceText: 'Note burned. Press the ash within 7 seconds to restore it.',
+      duration: 7000,
+      html: '<span class="heap" aria-hidden="true"></span>',
+      async onRestore() {
+        card.hidden = false;
+        const grow = card.animate([{ height: '0px', opacity: 0 }, { height: height + 'px', opacity: 0 }], { duration: Stringless.reducedMotion ? 1 : 260, easing: 'cubic-bezier(.4,0,.2,1)' });
+        await grow.finished;
+        await shards.restore();
+        card.querySelector('.notch').focus({ preventScroll: true });
+      },
+      onExpire() { shards.finish(); card.remove(); }
+    });
+  });
+</script>
+</body>
+</html>

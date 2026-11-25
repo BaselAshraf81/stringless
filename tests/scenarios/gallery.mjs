@@ -1,0 +1,21 @@
+export default async (p) => {
+  await p.viewport(1280, 900);
+  await p.goto('gallery/');
+  await p.sleep(600);
+  const frames = await p.eval(`document.querySelectorAll('iframe').length`);
+  p.expect(frames === 6, `gallery shows six live pieces (${frames})`);
+  await p.eval(`document.querySelectorAll('iframe').forEach(f => f.loading = 'eager'), true`);
+  await p.eval(`window.scrollTo(0, document.body.scrollHeight), true`);
+  await p.sleep(1500);
+  const loaded = await p.eval(`[...document.querySelectorAll('iframe')].filter(f => { try { return f.contentWindow.Stringless && f.contentWindow.Stringless.version; } catch (e) { return false; } }).length`);
+  p.expect(loaded === 6, `every piece loads the runtime (${loaded})`);
+  await p.eval(`window.scrollTo(0, 0), true`);
+  await p.sleep(300);
+  await p.shot('gallery-desktop');
+  await p.viewport(390, 844, true);
+  await p.goto('gallery/');
+  await p.sleep(600);
+  const overflow = await p.eval(`document.documentElement.scrollWidth - document.documentElement.clientWidth`);
+  p.expect(overflow <= 0, `no horizontal scroll on a phone (${overflow}px)`);
+  await p.shot('gallery-mobile');
+};

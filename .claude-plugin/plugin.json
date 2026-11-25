@@ -1,0 +1,14 @@
+{
+  "name": "stringless",
+  "displayName": "Stringless",
+  "version": "0.1.0",
+  "description": "Interface parts that explain themselves without text labels: material, motion, form, space and time. One skill with 10 commands, a zero-dependency runtime, a seed roller, a string detector and a cold-read subagent.",
+  "author": {
+    "name": "Basel Ashraf",
+    "url": "https://baselashraf.com"
+  },
+  "homepage": "https://github.com/BaselAshraf81/stringless",
+  "repository": "https://github.com/BaselAshraf81/stringless",
+  "license": "MIT",
+  "keywords": ["design", "ui", "ux", "frontend", "interaction", "motion", "accessibility", "components"]
+}

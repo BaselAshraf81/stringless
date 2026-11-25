@@ -1,0 +1,14 @@
+# Working notes and scratch files
+research/
+
+# Test output
+tests/shots/
+
+# Per-project working files the skill writes in user projects
+.stringless/
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.log
+node_modules/

@@ -1,0 +1,24 @@
+export default async (p) => {
+  await p.viewport(1280, 800);
+  await p.goto('skills/stringless/assets/examples/vapor-suggest.html');
+  await p.sleep(1700);
+  p.expect(await p.eval(`document.querySelectorAll('.vapor .w').length`) === 10, 'a pause brings a suggestion as vapor');
+  p.expect((await p.eval(`document.querySelector('.sl-live').textContent`)).includes('Tab to accept'), 'the suggestion is announced');
+  await p.shot('vapor-shown');
+  await p.type(' had');
+  await p.sleep(200);
+  p.expect((await p.eval(`document.querySelector('.vapor').textContent`)).startsWith(' no idea'), 'typing the same letters takes them from the vapor');
+  await p.key('Tab', 'Tab', { vk: 9 });
+  await p.sleep(1400);
+  p.expect((await p.eval(`document.getElementById('reply').value`)).endsWith('I had no idea the water got that still before sunrise.'), 'Tab condenses it into the text');
+  p.expect(await p.eval(`document.activeElement.id`) === 'reply', 'focus stays in the field');
+  await p.shot('vapor-wet');
+  await p.sleep(2000);
+  p.expect(await p.eval(`!!document.querySelector('.vapor')`), 'the next pause brings the next suggestion');
+  await p.key('Escape', 'Escape', { vk: 27 });
+  await p.sleep(800);
+  p.expect(!(await p.eval(`!!document.querySelector('.vapor')`)), 'Escape blows it away');
+  await p.key('Tab', 'Tab', { vk: 9 });
+  await p.sleep(100);
+  p.expect(await p.eval(`document.activeElement.id`) !== 'reply', 'Tab without a suggestion moves focus normally');
+};

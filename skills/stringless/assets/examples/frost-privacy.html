@@ -1,0 +1,181 @@
+<!doctype html>
+<!--
+  Stringless example: frost-pane privacy switch. Strangeness 3.
+  What is it?            A pane of frosted glass parked at the photo's right edge, with a lip to pull.
+  What does it touch?    The photo it is mounted on.
+  What will it do?       On approach the pane slides in a little; on hover or focus it covers a third
+                         of the photo, so you see exactly how others will see that part: frosted.
+  What does it cost?     Light. One press, or Space.
+  Where is it in time?   Private = the pane covers the photo. You can still wipe a clear patch with
+                         your pointer, because you are the owner; it frosts over when you leave.
+  Lexicon: frosted glass = private (visible to me, blurred to others); clear = public.
+  Reduced motion: the pane appears or leaves in place, with no slide.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frost-pane privacy · Stringless</title>
+<link rel="stylesheet" href="../runtime/stringless.css">
+<style>
+  @property --wr { syntax: '<length>'; inherits: true; initial-value: 0px; }
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(900px circle at var(--sl-px, 50%) var(--sl-py, 20%), rgb(255 255 255 / .45), transparent 60%),
+      var(--sl-grain),
+      #d9d4cb;
+    background-blend-mode: normal, multiply, normal;
+    font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    color: #2c2a27;
+  }
+  figure { margin: 0; display: grid; gap: 14px; width: min(560px, 90vw); }
+  .photo {
+    --cover-base: 0;
+    position: relative;
+    aspect-ratio: 16 / 10;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgb(0 0 0 / .2), 0 18px 40px -12px rgb(40 30 20 / .45);
+    background: #222;
+  }
+  .photo[data-private] { --cover-base: 1; }
+  .photo svg.scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  /* The runtime's default "private" preview blurs the target; this pane does the job instead. */
+  .photo[data-sl-preview] { filter: none; }
+
+  .pane {
+    --cover: calc(var(--cover-base) + (1 - 2 * var(--cover-base)) * var(--sl-rehearse) * var(--sl-intensity) * .34);
+    position: absolute;
+    inset: 0;
+    translate: calc((1 - var(--cover)) * (100% - 44px)) 0;
+    -webkit-backdrop-filter: blur(16px) saturate(.7) brightness(1.12);
+    backdrop-filter: blur(16px) saturate(.7) brightness(1.12);
+    background:
+      radial-gradient(60% 80% at calc(var(--sl-lx, 30) * 1%) calc(var(--sl-ly, 20) * 1%), rgb(255 255 255 / .3), transparent 62%),
+      linear-gradient(90deg, rgb(255 255 255 / .42), transparent 26px),
+      var(--sl-grain),
+      linear-gradient(100deg, rgb(236 242 248 / .34), rgb(236 242 248 / .2));
+    background-blend-mode: normal, normal, soft-light, normal;
+    border-left: 1px solid rgb(255 255 255 / .8);
+    box-shadow: inset 1px 0 0 rgb(255 255 255 / .4), -12px 0 26px -12px rgb(0 0 0 / .35);
+    -webkit-mask-image: radial-gradient(circle var(--wr) at var(--wx, -999px) var(--wy, -999px), transparent 55%, #000 100%);
+    mask-image: radial-gradient(circle var(--wr) at var(--wx, -999px) var(--wy, -999px), transparent 55%, #000 100%);
+    transition: translate .6s var(--sl-ease-ice), --wr .5s ease-out;
+  }
+  .photo:not([data-private]) .pane { --wr: 0px; }
+
+  /* The lip: the only control. Its hit area is 44px wide even though the glass edge is thin. */
+  .grip {
+    all: unset;
+    position: absolute;
+    right: 0;
+    z-index: 1;
+    top: 50%;
+    width: 44px;
+    height: 132px;
+    translate: 0 -50%;
+    cursor: grab;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .grip::before {
+    content: '';
+    position: absolute;
+    left: 15px; top: 14px; bottom: 14px; width: 14px;
+    border-radius: 8px;
+    background:
+      linear-gradient(90deg, rgb(255 255 255 / .85), rgb(255 255 255 / .35) 40%, rgb(255 255 255 / .6)),
+      rgb(220 232 240 / .5);
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / .6),
+      0 2px 8px rgb(0 0 0 / .25),
+      0 0 calc(var(--sl-near) * 14px) rgb(255 255 255 / calc(var(--sl-near) * .9));
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+  .grip::after {
+    content: '';
+    position: absolute;
+    left: 20px; top: 50%; width: 4px; height: 34px;
+    translate: 0 -50%;
+    border-radius: 2px;
+    background: repeating-linear-gradient(0deg, rgb(60 80 100 / .45) 0 2px, transparent 2px 6px);
+  }
+  .grip:focus-visible { outline: none; }
+  .grip:focus-visible::before { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2f6fd6, 0 2px 8px rgb(0 0 0 / .25); }
+  .photo[data-private] .grip { cursor: grab; }
+
+  figcaption { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px; }
+  figcaption b { font-weight: 600; }
+  figcaption span { color: #5e5952; font-variant-numeric: tabular-nums; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pane { transition: --wr .2s; }
+  }
+</style>
+</head>
+<body>
+<figure>
+  <div class="photo">
+    <svg class="scene" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Photo: a lake at dawn below mountains">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#5b5a9a"/><stop offset=".45" stop-color="#d98a8f"/><stop offset=".72" stop-color="#f4c29a"/><stop offset="1" stop-color="#f7dcb8"/>
+        </linearGradient>
+        <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#e9b9a0"/><stop offset=".5" stop-color="#8a7aa8"/><stop offset="1" stop-color="#3d3e6b"/>
+        </linearGradient>
+        <radialGradient id="sun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff6dc"/><stop offset=".5" stop-color="#ffd9a0"/><stop offset="1" stop-color="#ffd9a0" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect width="800" height="500" fill="url(#sky)"/>
+      <circle cx="520" cy="250" r="120" fill="url(#sun)"/>
+      <circle cx="520" cy="262" r="26" fill="#fff3d6"/>
+      <path d="M0 300 L90 220 L160 262 L250 170 L330 240 L400 205 L470 262 L560 196 L640 250 L720 214 L800 252 V320 H0Z" fill="#8f7fa6" opacity=".75"/>
+      <path d="M0 318 L70 270 L150 300 L230 244 L310 296 L380 268 L460 304 L540 262 L620 300 L700 270 L800 300 V340 H0Z" fill="#5d5786"/>
+      <rect y="330" width="800" height="170" fill="url(#lake)"/>
+      <rect x="494" y="336" width="52" height="4" rx="2" fill="#fff1d0" opacity=".8"/>
+      <rect x="480" y="352" width="80" height="3" rx="1.5" fill="#fff1d0" opacity=".5"/>
+      <rect x="500" y="368" width="40" height="3" rx="1.5" fill="#fff1d0" opacity=".35"/>
+      <path d="M120 430 q40 -12 80 0" stroke="#2b2c52" stroke-width="3" fill="none" opacity=".5"/>
+      <path d="M0 330 H800" stroke="#fff" stroke-opacity=".25"/>
+    </svg>
+    <div class="pane" data-sl-material="glass"></div>
+    <!-- The grip sits on the frame, not on the pane, so the glass can move without the control fleeing the pointer. -->
+    <button class="grip" type="button" role="switch" aria-checked="false" aria-label="Private"
+      data-sl-verb="private" data-sl-target=".photo" data-sl-radius="110"></button>
+  </div>
+  <figcaption><b>Lake Bled, before the boats</b><span>06:12</span></figcaption>
+</figure>
+
+<script src="../runtime/stringless.js"></script>
+<script>
+  const photo = document.querySelector('.photo');
+  const pane = photo.querySelector('.pane');
+  const grip = photo.querySelector('.grip');
+
+  grip.addEventListener('click', () => {
+    const priv = !photo.hasAttribute('data-private');
+    photo.toggleAttribute('data-private', priv);
+    grip.setAttribute('aria-checked', String(priv));
+    // The next rehearsal previews the opposite move.
+    grip.setAttribute('data-sl-verb', priv ? 'public' : 'private');
+    Stringless.announce(priv ? 'Photo is private. Only you can see it.' : 'Photo is public.');
+  });
+
+  // The owner can wipe the frost: a clear patch follows the pointer and frosts over on leave.
+  photo.addEventListener('pointermove', (e) => {
+    if (!photo.hasAttribute('data-private') || grip.contains(e.target)) { pane.style.setProperty('--wr', '0px'); return; }
+    const r = pane.getBoundingClientRect();
+    pane.style.setProperty('--wx', (e.clientX - r.left) + 'px');
+    pane.style.setProperty('--wy', (e.clientY - r.top) + 'px');
+    pane.style.setProperty('--wr', '78px');
+  });
+  photo.addEventListener('pointerleave', () => pane.style.setProperty('--wr', '0px'));
+</script>
+</body>
+</html>

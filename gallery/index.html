@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stringless: interface parts that explain themselves</title>
+<meta name="description" content="A Claude skill and runtime for UI components that show what they do through material, motion, form, space and time instead of text labels.">
+<style>
+  :root {
+    color-scheme: dark;
+    --wall: #22211e;
+    --wall-hi: #2e2c28;
+    --ink: #ece7de;
+    --muted: #a59e92;
+    --rule: rgb(236 231 222 / .14);
+    --lamp: rgb(255 236 200 / .1);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--wall); }
+  body {
+    margin: 0;
+    color: var(--ink);
+    font: 16px/1.6 var(--sans);
+    background:
+      radial-gradient(1200px 700px at 50% -200px, var(--wall-hi), transparent 70%),
+      var(--wall);
+  }
+  ::selection { background: #e9c98f; color: #1d1b18; }
+  a { color: #f0d7a8; text-underline-offset: 3px; }
+  a:focus-visible, iframe:focus-visible { outline: 2px solid #f0d7a8; outline-offset: 4px; }
+
+  header { max-width: 1120px; margin: 0 auto; padding: clamp(48px, 9vw, 112px) 24px 32px; }
+  h1 { margin: 0; font: 600 clamp(44px, 8vw, 88px)/1 var(--serif); letter-spacing: -.02em; }
+  .lede { max-width: 38ch; margin: 22px 0 0; font: 400 clamp(19px, 2.3vw, 24px)/1.45 var(--serif); color: #d9d2c6; }
+  .how { max-width: 64ch; margin: 18px 0 0; color: var(--muted); }
+  kbd { padding: 1px 6px; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; font: 600 13px var(--sans); color: var(--ink); }
+
+  main { max-width: 1120px; margin: 0 auto; padding: 8px 24px 64px; display: grid; gap: clamp(56px, 8vw, 96px); }
+  .piece { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 36px; align-items: start; }
+  .piece:nth-child(even) { grid-template-columns: 300px minmax(0, 1fr); }
+  .piece:nth-child(even) .frame { order: 2; }
+  .frame {
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #111;
+    box-shadow: 0 0 0 1px rgb(0 0 0 / .5), 0 30px 60px -24px rgb(0 0 0 / .7);
+  }
+  .frame::before {
+    /* the gallery lamp above each piece */
+    content: '';
+    position: absolute;
+    inset: -40% 10% auto;
+    height: 80%;
+    background: radial-gradient(closest-side, var(--lamp), transparent);
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: screen;
+  }
+  iframe { display: block; width: 100%; height: 540px; border: 0; background: #111; }
+
+  .label { padding-top: 6px; }
+  .label h2 { margin: 0; font: 600 26px/1.15 var(--serif); }
+  .meta { margin: 6px 0 16px; font-size: 13.5px; color: var(--muted); }
+  dl { margin: 0; display: grid; gap: 10px; }
+  dt { font-size: 13px; color: var(--muted); }
+  dd { margin: 0; font-size: 15px; line-height: 1.5; }
+  .open { display: inline-block; margin-top: 16px; font-size: 14px; }
+
+  footer { max-width: 1120px; margin: 0 auto; padding: 32px 24px 64px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+
+  @media (max-width: 860px) {
+    .piece, .piece:nth-child(even) { grid-template-columns: 1fr; gap: 18px; }
+    .piece:nth-child(even) .frame { order: 0; }
+    iframe { height: 560px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Stringless</h1>
+  <p class="lede">Interface parts that explain themselves without a single word on them.</p>
+  <p class="how">Each piece below is live, and each was built with the Stringless skill and its runtime. Move toward a control, hover it, focus it with <kbd>Tab</kbd>, hold it, press it. Press <kbd>?</kbd> inside a piece to see the words it keeps for screen readers.</p>
+</header>
+
+<main>
+  <section class="piece" aria-labelledby="p1">
+    <div class="frame"><iframe src="../skills/stringless/assets/examples/wet-ink-save.html" title="Wet-ink save, live example" loading="lazy"></iframe></div>
+    <div class="label">
+      <h2 id="p1">Blotter</h2>
+      <p class="meta">save · light · strangeness 3</p>
+      <dl>
+        <dt>What is it</dt><dd>A rocker blotter beside a handwritten note.</dd>
+        <dt>What it touches</dt><dd>Only the paragraphs changed since the last save, which are still wet ink.</dd>
+        <dt>What it will do</dt><dd>It rocks toward the page as you approach; the wet ink glistens harder.</dd>
+        <dt>What it costs</dt><dd>One press, or Ctrl+S.</dd>
+        <dt>Where it is in time</dt><dd>Dry ink is saved. The felt keeps a mirrored imprint of the last save.</dd>
+      </dl>
+      <a class="open" href="../skills/stringless/assets/examples/wet-ink-save.html">Open full size</a>
+    </div>
+  </section>
+
+  <section class="piece" aria-labelledby="p2">
+    <div class="frame"><iframe src="../skills/stringless/assets/examples/ember-delete.html" title="Ember delete, live example" loading="lazy"></iframe></div>
+    <div class="label">
+      <h2 id="p2">Ember corner</h2>
+      <p class="meta">delete · heavy · strangeness 3</p>
+      <dl>
+        <dt>What is it</dt><dd>A charred corner on each card, with a warm seam.</dd>
+        <dt>What it touches</dt><dd>Its own card.</dd>
+        <dt>What it will do</dt><dd>Hovering starts the char. Holding spreads the burn; letting go early cools it.</dd>
+        <dt>What it costs</dt><dd>A full hold, or two presses from the keyboard.</dd>
+        <dt>Where it is in time</dt><dd>The card falls as ash. The ash pile cools for seven seconds, and pressing it restores the card.</dd>
+      </dl>
+      <a class="open" href="../skills/stringless/assets/examples/ember-delete.html">Open full size</a>
+    </div>
+  </section>
+
+  <section class="piece" aria-labelledby="p3">
+    <div class="frame"><iframe src="../skills/stringless/assets/examples/frost-privacy.html" title="Frost-pane privacy switch, live example" loading="lazy"></iframe></div>
+    <div class="label">
+      <h2 id="p3">Frost pane</h2>
+      <p class="meta">private · light · strangeness 3</p>
+      <dl>
+        <dt>What is it</dt><dd>A pane of frosted glass parked at the photo's edge.</dd>
+        <dt>What it touches</dt><dd>The photo it's mounted on.</dd>
+        <dt>What it will do</dt><dd>Hovering slides it over a third of the photo, so you see exactly how others will see it.</dd>
+        <dt>What it costs</dt><dd>One press, or Space.</dd>
+        <dt>Where it is in time</dt><dd>Private means frosted. You can still wipe a clear patch, because it's yours; it frosts over when you leave.</dd>
+      </dl>
+      <a class="open" href="../skills/stringless/assets/examples/frost-privacy.html">Open full size</a>
+    </div>
+  </section>
+
+  <section class="piece" aria-labelledby="p4">
+    <div class="frame"><iframe src="../skills/stringless/assets/examples/marble-choice.html" title="Marble single choice, live example" loading="lazy"></iframe></div>
+    <div class="label">
+      <h2 id="p4">One marble</h2>
+      <p class="meta">choose · light · strangeness 3</p>
+      <dl>
+        <dt>What is it</dt><dd>A wooden tray with three wells and a single glass marble.</dd>
+        <dt>What it touches</dt><dd>The order total below it.</dd>
+        <dt>What it will do</dt><dd>Hovering another well tips the tray and the marble starts to roll toward it.</dd>
+        <dt>What it costs</dt><dd>A click, or arrow keys. Native radio buttons sit underneath.</dd>
+        <dt>Where it is in time</dt><dd>There is one marble, so there can be one choice. The well it left keeps a ring of dust for a moment.</dd>
+      </dl>
+      <a class="open" href="../skills/stringless/assets/examples/marble-choice.html">Open full size</a>
+    </div>
+  </section>
+
+  <section class="piece" aria-labelledby="p5">
+    <div class="frame"><iframe src="../skills/stringless/assets/examples/vapor-suggest.html" title="AI suggestions as vapor, live example" loading="lazy"></iframe></div>
+    <div class="label">
+      <h2 id="p5">Vapor</h2>
+      <p class="meta">AI suggest · light · strangeness 3</p>
+      <dl>
+        <dt>What is it</dt><dd>Mist that gathers after your cursor when you pause.</dd>
+        <dt>What it touches</dt><dd>Your text, exactly where the words would go.</dd>
+        <dt>What it will do</dt><dd>Hovering starts to condense it. Mistier words are the ones the model is less sure of.</dd>
+        <dt>What it costs</dt><dd>Tab condenses it into ink. Escape blows it away. Typing the same letters takes them one by one.</dd>
+        <dt>Where it is in time</dt><dd>Vapor isn't yours yet. Accepted words land as wet ink and dry.</dd>
+      </dl>
+      <a class="open" href="../skills/stringless/assets/examples/vapor-suggest.html">Open full size</a>
+    </div>
+  </section>
+
+  <section class="piece" aria-labelledby="p6">
+    <div class="frame"><iframe src="../skills/stringless/assets/examples/paper-export.html" title="Slot-print export, live example" loading="lazy"></iframe></div>
+    <div class="label">
+      <h2 id="p6">Slot print</h2>
+      <p class="meta">export · medium · strangeness 3</p>
+      <dl>
+        <dt>What is it</dt><dd>A printer bar under a report, and a rack of paper stocks.</dd>
+        <dt>What it touches</dt><dd>The report. The loaded stock picks the format.</dd>
+        <dt>What it will do</dt><dd>Hovering feeds the print halfway out of the slot in its real future form: a page, a ledger strip, a photo.</dd>
+        <dt>What it costs</dt><dd>One press. The real file is made and downloaded.</dd>
+        <dt>Where it is in time</dt><dd>The finished print drops into the tray and stays there as a link to the file.</dd>
+      </dl>
+      <a class="open" href="../skills/stringless/assets/examples/paper-export.html">Open full size</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>Stringless is a skill for Claude Code and other coding agents, plus a small runtime. <a href="https://github.com/BaselAshraf81/stringless">Source on GitHub</a></span>
+  <span>Made by <a href="https://baselashraf.com">Basel Ashraf</a></span>
+</footer>
+</body>
+</html>
