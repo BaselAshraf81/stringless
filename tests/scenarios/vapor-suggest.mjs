@@ -18,6 +18,22 @@ export default async (p) => {
   await p.key('Escape', 'Escape', { vk: 27 });
   await p.sleep(800);
   p.expect(!(await p.eval(`!!document.querySelector('.vapor')`)), 'Escape blows it away');
+
+  // A sweep across the mist dismisses it. It must not select text or count as a tap.
+  await p.type(' Mira');
+  await p.sleep(1500);
+  const before = await p.eval(`document.getElementById('reply').value`);
+  const w = await p.center('.vapor .w:nth-child(2)');
+  p.expect(!!w, 'the next suggestion appears');
+  await p.move(w.x - 40, w.y, 2);
+  await p.down();
+  await p.move(w.x + 60, w.y, 8);
+  await p.up();
+  await p.sleep(900);
+  p.expect(!(await p.eval(`!!document.querySelector('.vapor')`)), 'a sweep blows the suggestion away');
+  p.expect(await p.eval(`document.getElementById('reply').value`) === before, 'a sweep accepts nothing');
+  p.expect(await p.eval(`String(getSelection())`) === '', 'a sweep selects no text');
+  await p.eval(`document.getElementById('reply').focus(), true`);
   await p.key('Tab', 'Tab', { vk: 9 });
   await p.sleep(100);
   p.expect(await p.eval(`document.activeElement.id`) !== 'reply', 'Tab without a suggestion moves focus normally');

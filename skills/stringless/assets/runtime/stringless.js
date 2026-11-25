@@ -1,4 +1,4 @@
-/*! Stringless runtime 0.1.0 | MIT | https://github.com/BaselAshraf81/stringless
+/*! Stringless runtime 0.2.0 | MIT | https://github.com/BaselAshraf81/stringless
  *
  * Zero-dependency helpers for controls that explain themselves without labels.
  * Load as a classic <script>, or `import "./stringless.js"` from a bundler.
@@ -9,11 +9,12 @@
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   if (G.Stringless && G.Stringless.version) return;
 
-  const VERSION = '0.1.0';
+  const VERSION = '0.2.0';
   const doc = document;
   const html = doc.documentElement;
   const CONTROL = '[data-sl-verb]';
   const MATERIAL = '[data-sl-material]';
+  const POINTER = '[data-sl-pointer]';
   const FX = '[data-sl-fx]';
   const NATIVE = 'button, a[href], input, select, textarea, summary, [contenteditable=""], [contenteditable="true"]';
   const reduceMQ = matchMedia('(prefers-reduced-motion: reduce)');
@@ -59,6 +60,10 @@
     const nums = { '--sl-near': 0, '--sl-rehearse': 0, '--sl-hold': 0, '--sl-intensity': 1, '--sl-fluency': 0, '--sl-wear': 0, '--sl-life': 1 };
     for (const name in nums) {
       try { CSS.registerProperty({ name, syntax: '<number>', inherits: true, initialValue: String(nums[name]) }); } catch (e) { /* already registered by the stylesheet */ }
+    }
+    // The page pointer changes every frame. It must not inherit, or each write restyles everything below it.
+    for (const name of ['--sl-px', '--sl-py']) {
+      try { CSS.registerProperty({ name, syntax: '*', inherits: false }); } catch (e) { /* already registered by the stylesheet */ }
     }
   }
 
@@ -304,6 +309,7 @@
   // ---------------------------------------------------------------- registry
   const controls = new Map();
   const lit = new Map();
+  const pointed = new Set();
   const visible = new Set();
   const bound = new WeakSet();
   const targetSources = new Map();
@@ -377,6 +383,7 @@
       if (config.dev) lint(s);
     }
     if (el.matches(MATERIAL) && !lit.has(el)) lit.set(el, { rect: null });
+    if (el.matches(POINTER)) pointed.add(el);
     if (io) io.observe(el);
     rectsDirty = true;
   }
@@ -390,13 +397,15 @@
   function unregister(el) {
     unregisterControl(el);
     lit.delete(el);
+    pointed.delete(el);
     visible.delete(el);
     if (io) io.unobserve(el);
   }
   function scan(node) {
     if (!node || node.nodeType !== 1) return;
-    if (node.matches(CONTROL + ',' + MATERIAL)) register(node);
-    node.querySelectorAll(CONTROL + ',' + MATERIAL).forEach(register);
+    const sel = CONTROL + ',' + MATERIAL + ',' + POINTER;
+    if (node.matches(sel)) register(node);
+    node.querySelectorAll(sel).forEach(register);
   }
 
   function lint(s) {
@@ -440,6 +449,9 @@
       emit(s.el, 'sl:rehearse');
       startHesitation(s);
       if (s.el.getAttribute('data-sl-tether') === 'line') addTether(s);
+    } else if (prev === 'commit' && ACTIVE[next]) {
+      // The pointer stayed after a commit: lingering again is a new hesitation.
+      startHesitation(s);
     }
     if (ACTIVE[prev] && !ACTIVE[next]) {
       endHesitation(s);
@@ -851,8 +863,12 @@
       lastPX = px; lastPY = py;
       // Lit surfaces may move (slides, folds); re-measure the visible ones before writing their light.
       for (const [el, l] of lit) if (visible.has(el)) l.rect = el.getBoundingClientRect();
-      html.style.setProperty('--sl-px', round(px, 1) + 'px');
-      html.style.setProperty('--sl-py', round(py, 1) + 'px');
+      // The page pointer goes only to elements that ask for it. On <html> it would restyle the whole page every frame.
+      if (pointed.size) {
+        const vx = round(px, 1) + 'px';
+        const vy = round(py, 1) + 'px';
+        for (const el of pointed) { setVar(el, '--sl-px', vx); setVar(el, '--sl-py', vy); }
+      }
       for (const [el, l] of lit) {
         if (!visible.has(el) || !l.rect) continue;
         const r = l.rect;
@@ -954,8 +970,10 @@
       await settled(anims);
       return handle(el, layer, anims);
     }
-    const cols = opts.cols || clamp(Math.round(r.width / 56), 3, 9);
-    const rows = opts.rows || clamp(Math.round(r.height / 48), 2, 7);
+    let cols = opts.cols || clamp(Math.round(r.width / 56), 3, 9);
+    let rows = opts.rows || clamp(Math.round(r.height / 48), 2, 7);
+    // Every shard is a full clone of the element, so the count sets the cost. 8 cells (16 shards) stays smooth.
+    if (!opts.cols && !opts.rows) while (cols * rows > 8) { if (cols >= rows) cols--; else rows--; }
     const pts = [];
     for (let j = 0; j <= rows; j++) {
       pts[j] = [];
@@ -1263,6 +1281,7 @@
         }, { rootMargin: '160px' })
       : null;
     scan(doc.body);
+    if (html.matches(POINTER)) pointed.add(html);
     if (!io) for (const el of [...controls.keys(), ...lit.keys()]) visible.add(el);
     mo = new MutationObserver((list) => {
       for (const m of list) {
@@ -1270,8 +1289,8 @@
           m.addedNodes.forEach((n) => n.nodeType === 1 && scan(n));
           m.removedNodes.forEach((n) => {
             if (n.nodeType !== 1 || n.isConnected) return;
-            if (controls.has(n) || lit.has(n)) unregister(n);
-            if (n.querySelectorAll) n.querySelectorAll(CONTROL + ',' + MATERIAL).forEach((c) => { if (!c.isConnected) unregister(c); });
+            if (controls.has(n) || lit.has(n) || pointed.has(n)) unregister(n);
+            if (n.querySelectorAll) n.querySelectorAll(CONTROL + ',' + MATERIAL + ',' + POINTER).forEach((c) => { if (!c.isConnected) unregister(c); });
           });
         } else if (m.type === 'attributes') {
           const el = m.target;
@@ -1281,12 +1300,15 @@
           } else if (m.attributeName === 'data-sl-material') {
             if (el.hasAttribute('data-sl-material')) register(el);
             else { lit.delete(el); if (!controls.has(el)) unregister(el); }
+          } else if (m.attributeName === 'data-sl-pointer') {
+            if (el.hasAttribute('data-sl-pointer')) register(el);
+            else pointed.delete(el);
           }
         }
       }
       dirty();
     });
-    mo.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-sl-verb', 'data-sl-material'] });
+    mo.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-sl-verb', 'data-sl-material', 'data-sl-pointer'] });
     addEventListener('pointermove', onPointerMove, { passive: true });
     doc.addEventListener('pointerout', onPointerOut, { passive: true });
     addEventListener('scroll', dirty, { passive: true, capture: true });

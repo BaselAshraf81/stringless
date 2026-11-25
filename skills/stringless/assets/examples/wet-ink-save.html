@@ -3,7 +3,8 @@
   Stringless example: wet-ink save. Strangeness 3.
   What is it?            A rocker blotter on a desk, next to a written page.
   What does it touch?    The page. Only paragraphs changed since the last save are wet ink.
-  What will it do?       On approach it rocks toward the page and the wet ink glistens harder.
+  What will it do?       On approach it rocks toward the page, and the start of every wet line dries
+                         matte: a preview of the blot. Saving rocks it across, drying the ink under it.
   What does it cost?     Light. One press. Ctrl/Cmd+S does the same.
   Where is it in time?   Wet ink = unsaved. Dry, matte ink = saved. The felt keeps a mirrored
                          imprint of what was last blotted: proof of the save.
@@ -63,9 +64,24 @@
   .writing p[data-wet] {
     color: #12307a;
     text-shadow: 0 0 .6px rgb(20 50 150 / .7), 0 .6px 1.2px rgb(10 30 100 / .25);
-    transition-duration: .15s;
+    transition: text-shadow .15s ease-out;
   }
+  /* Drying shows where it happens: a matte front crosses the wet lines. Hovering or focusing the
+     blotter dries the start of each line (the rehearsal); the save carries the front with the blotter. */
+  @property --dry { syntax: '<number>'; inherits: false; initial-value: 0; }
+  .page[data-sl-preview="save"] .writing p[data-wet] { --dry: calc(var(--sl-rehearse) * .3); }
+  .page[data-sl-preview="save"] .writing p[data-wet], .writing p[data-drying] {
+    color: transparent;
+    text-shadow: none;
+    transition: none;
+    background: linear-gradient(90deg, #2b2f38 calc(var(--dry) * 100% - 4%), #12307a calc(var(--dry) * 100% + 4%));
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
   /* The sheen: a light that only brightens pixels darker than itself, so it lands on ink, never on paper. */
+  /* The sheen follows the pointer. .writing gets --sl-px and --sl-py, which don't inherit on their own. */
+  .writing p, .writing p::after { --sl-px: inherit; --sl-py: inherit; }
   .writing p::after {
     content: '';
     position: absolute;
@@ -80,6 +96,8 @@
   }
   .writing p[data-wet]::after { opacity: .75; transition-duration: .2s; }
   .page[data-sl-preview="save"] .writing p[data-wet]::after { opacity: calc(.75 + var(--sl-rehearse) * .25); }
+  /* Drying ink loses its sheen, so only the ink color shows where the front is. */
+  .page .writing p[data-wet][data-drying]::after { opacity: 0; transition: opacity .25s ease-out; }
 
   /* The blotter */
   .blotter {
@@ -138,10 +156,10 @@
   }
 </style>
 </head>
-<body>
+<body data-sl-pointer>
 <main class="desk">
   <article class="page" data-sl-material="paper" data-sl-phase="wet">
-    <div class="writing" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Note" spellcheck="false">
+    <div class="writing" data-sl-pointer contenteditable="true" role="textbox" aria-multiline="true" aria-label="Note" spellcheck="false">
       <p>Saturday market.</p>
       <p>Pears, the hard green ones. Two loaves from the stall by the fountain, and whatever cheese the old man is pushing this week.</p>
       <p data-wet>Ask again about the walnut honey. Last time he said the bees had moved.</p>
@@ -203,7 +221,8 @@
 
   async function rockAcross(paragraphs) {
     const b = blotter.getBoundingClientRect();
-    const frames = [{ transform: 'translate(0px, 0px) rotate(0deg)', offset: 0 }];
+    // Each segment eases on its own (overall easing is linear), so a paragraph's drying can follow its leg exactly.
+    const frames = [{ transform: 'translate(0px, 0px) rotate(0deg)', offset: 0, easing: 'ease-in-out' }];
     const legs = [];
     for (const p of paragraphs) {
       const r = p.getBoundingClientRect();
@@ -213,15 +232,30 @@
     const total = 1 + legs.length * 2 + 1;
     let i = 1;
     for (const leg of legs) {
-      frames.push({ transform: `translate(${leg.from}px, ${leg.y}px) rotate(-11deg)`, offset: i++ / total });
-      frames.push({ transform: `translate(${leg.to}px, ${leg.y}px) rotate(11deg)`, offset: i++ / total });
+      frames.push({ transform: `translate(${leg.from}px, ${leg.y}px) rotate(-11deg)`, offset: i++ / total, easing: 'ease-in-out' });
+      frames.push({ transform: `translate(${leg.to}px, ${leg.y}px) rotate(11deg)`, offset: i++ / total, easing: 'ease-in-out' });
     }
     frames.push({ transform: 'translate(0px, 0px) rotate(0deg)', offset: 1 });
     const duration = 380 + legs.length * 760 + 420;
-    const anim = blotter.animate(frames, { duration, easing: 'ease-in-out' });
-    // Dry each paragraph as the felt passes over its far edge.
-    legs.forEach((leg, k) => setTimeout(() => leg.p.removeAttribute('data-wet'), (duration * (2 + k * 2)) / total));
-    await anim.finished.catch(() => null);
+    const anim = blotter.animate(frames, { duration, easing: 'linear' });
+    // The ink dries under the felt as it passes: the front starts where the rehearsal left it.
+    const drying = legs.map((leg, k) => {
+      const s = (1 + 2 * k) / total;
+      const e = (2 + 2 * k) / total;
+      const from = parseFloat(getComputedStyle(leg.p).getPropertyValue('--dry')) || 0;
+      leg.p.setAttribute('data-drying', '');
+      const a = leg.p.animate([{ '--dry': from }, { '--dry': 1.1 }], { duration: (e - s) * duration, delay: s * duration, easing: 'ease-in-out', fill: 'both' });
+      return a.finished.catch(() => null).then(() => {
+        // Swap the painted front for plain dry ink with no fade, so nothing flickers.
+        leg.p.style.transition = 'none';
+        leg.p.removeAttribute('data-wet');
+        leg.p.removeAttribute('data-drying');
+        a.cancel();
+        void leg.p.offsetWidth;
+        leg.p.style.transition = '';
+      });
+    });
+    await Promise.all([anim.finished.catch(() => null), ...drying]);
   }
 </script>
 </body>

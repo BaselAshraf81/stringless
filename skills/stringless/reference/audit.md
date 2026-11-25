@@ -14,13 +14,13 @@ Use the browser for each control:
 |---|---|
 | Name | Every control has a role and a name a screen reader reads; toggles expose state (`aria-pressed`, `aria-checked`, `aria-expanded`) |
 | Keyboard | Tab reaches it in a logical order; focus shows approach and rehearsal; Enter or Space commits; heavy actions need two presses with an announcement in between; Escape cancels |
-| Touch | Touch-hold shows the rehearsal; nothing needs hover; targets are at least 44 by 44px |
+| Touch | Touch-hold shows the rehearsal; nothing needs hover; every key action has a touch gesture; a drag never selects text or counts as a tap; targets are at least 44 by 44px |
 | Captions | `?` toggles captions; a long press shows one; hesitation shows one |
 | Reduced motion | Every verb has a still version that keeps the meaning; no idle loops |
 | Echo | Heavy actions leave a focusable remnant with an undo window that's announced |
 | Rehearsal safety | Rehearsals change no data and make no network writes; leaving reverses them |
 | Contrast | Text on any material is at least 4.5:1 (3:1 for large text); focus rings are at least 3:1 against what's around them |
-| Performance | 60fps with 4x CPU throttling in DevTools; filters only on small areas; nothing animates off screen; no layout shift from proximity effects |
+| Performance | 60fps with 4x CPU throttling; no frame over 50ms while pointing or committing (see [staying smooth](channels/motion.md#staying-smooth)); only transform, opacity and small filters animate; no inheriting per-frame variables on `<html>`, `<body>` or large containers; nothing animates off screen; nothing jumps when proximity changes, a motion is interrupted or an item is removed |
 | Lexicon | Materials, verbs and phases match LEXICON.md; no material has two meanings |
 | Content | No content, numbers, prices, legal text or error explanation was removed |
 | Screen reader pass | A full pass with VoiceOver or NVDA makes sense in order, with no unnamed controls and no unexplained silence after actions |

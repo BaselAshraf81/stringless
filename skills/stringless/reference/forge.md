@@ -71,9 +71,10 @@ Framework notes:
 Bounded: build fully, inspect once, fix in one batch, confirm once more at most.
 
 1. Serve the page (`node <skill-dir>/scripts/serve.mjs <dir>` for static files) and capture: rest, approach, rehearse, mid-commit, echo. Then keyboard focus, the armed state for heavy actions, touch emulation, reduced motion, and a 375px-wide viewport.
-2. Check the result against the spec table, row by row.
-3. Run `node <skill-dir>/scripts/stringcheck.mjs <files>` and fix every error.
-4. At strangeness 3 or more, run [guess](guess.md) on the rest and approach screenshots.
+2. Interrupt every motion: approach another target mid-rehearsal, commit mid-rehearsal, commit again mid-commit, and leave mid-rehearsal. Nothing may jump; each new motion continues from where the last one was. Then use every gesture with mouse, touch and keyboard: a tap, a press-and-drag, and each shortcut. Each gives exactly one result.
+3. Check the result against the spec table, row by row.
+4. Run `node <skill-dir>/scripts/stringcheck.mjs <files>` and fix every error.
+5. At strangeness 3 or more, run [guess](guess.md) on the rest and approach screenshots.
 
 ## 6. Record
 

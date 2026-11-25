@@ -4,7 +4,8 @@
   What is it?            Mist that gathers after the cursor while you pause.
   What does it touch?    Your text: it sits exactly where it would go.
   What will it do?       Hovering the mist starts to condense it; the words sharpen toward ink.
-  What does it cost?     Light. Tab or a click condenses it into your text. Escape blows it away.
+                         Pressing and sweeping sideways pushes it; it thins as it goes.
+  What does it cost?     Light. Tab or a tap condenses it into your text. Escape or a sweep blows it away.
                          Typing the same letters takes them one by one; typing something else clears it.
   Where is it in time?   Vapor = not yours yet. Mistier words = the model is less sure of them.
                          Accepted words land as wet ink and dry.
@@ -80,19 +81,25 @@
   .wet { color: rgb(27 63 158 / .85); text-shadow: 0 0 .6px rgb(27 63 158 / .6); transition: color 1.6s ease-out, text-shadow 1.6s ease-out; }
   .wet.dry { color: transparent; text-shadow: none; }
 
-  .vapor { pointer-events: auto; cursor: pointer; }
+  /* A tap condenses the mist. A sweep blows it away. Neither may start a text selection. */
+  @property --blow { syntax: '<number>'; inherits: true; initial-value: 0; }
+  .vapor { pointer-events: auto; cursor: pointer; user-select: none; -webkit-user-select: none; transition: --blow .25s ease-out; }
   .vapor .w {
     --c: .5;
     display: inline-block;
     color: rgb(60 75 110 / calc(.26 + var(--c) * .34 + var(--pull) * .22));
-    filter: blur(calc(.45px + (1 - var(--c)) * 1.7px - var(--pull) * (1 - var(--c)) * 1.2px));
+    filter: blur(calc(.45px + (1 - var(--c)) * 1.7px - var(--pull) * (1 - var(--c)) * 1.2px + var(--blow) * 5px));
+    opacity: calc(1 - var(--blow) * .65);
     transition: --pull .35s ease-out;
     white-space: pre;
+    touch-action: pan-y;
   }
   /* After a longer pause the mist gathers on its own, so keyboard and touch users see that it can condense. */
   .vapor.gathering { --pull: .6; }
   /* stringcheck-disable hover-only: the keyboard twin is .gathering plus the spoken "Tab to accept" */
   .vapor:hover { --pull: 1; }
+  /* While a sweep pushes it, the mist thins in the direction of the push: the preview of blowing it away. */
+  .vapor.blowing { --pull: 0; transition: none; cursor: grabbing; }
   /* Two slow drifts, then still: vapor at rest stays calm. */
   .vapor .w.drift { animation: drift 2.8s ease-in-out 2 alternate; }
   @keyframes drift {
@@ -107,14 +114,14 @@
   }
 </style>
 </head>
-<body>
+<body data-sl-pointer>
 <main class="sheet" data-sl-material="paper">
   <label class="to" for="reply">Reply to <b>Mira</b></label>
   <div class="field">
     <textarea id="reply" spellcheck="false" aria-describedby="hint">Thanks for the photos from the lake. I</textarea>
     <div class="mirror" aria-hidden="true"></div>
   </div>
-  <p id="hint" class="hint">Suggestions appear after the cursor when you pause. Press Tab to accept one, or Escape to dismiss it.</p>
+  <p id="hint" class="hint">Suggestions appear after the cursor when you pause. Press Tab to accept one, or Escape to dismiss it. With a pointer, tap the suggestion to accept it, or sweep across it to dismiss it.</p>
 </main>
 
 <script src="../runtime/stringless.js"></script>
@@ -166,9 +173,52 @@
     vaporEl = mirror.querySelector('.vapor');
     clearTimeout(gatherTimer);
     if (vaporEl) {
-      vaporEl.addEventListener('click', () => accept(), { once: true });
+      vaporEl.addEventListener('pointerdown', press);
       gatherTimer = setTimeout(() => vaporEl && vaporEl.classList.add('gathering'), 2400);
     }
+  }
+
+  // Press on the mist: release in place to condense it, or sweep sideways to blow it away.
+  // A press that moved never counts as a tap, and the words follow the push from where they are.
+  const BLOW = 48;
+  function press(e) {
+    if (!suggestion || busy || e.button !== 0) return;
+    e.preventDefault();
+    const el = vaporEl;
+    const words = [...el.querySelectorAll('.w')];
+    const x0 = e.clientX;
+    let dx = 0;
+    let moved = false;
+    try { el.setPointerCapture(e.pointerId); } catch (err) { /* synthetic pointer */ }
+    const move = (ev) => {
+      if (ev.pointerId !== e.pointerId) return;
+      dx = ev.clientX - x0;
+      if (!moved && Math.abs(dx) < 6) return;
+      if (!moved) {
+        moved = true;
+        el.classList.add('blowing');
+        // Freeze the drift where it is, so the push starts from the words' current place.
+        words.forEach((w) => { const t = getComputedStyle(w).translate; w.classList.remove('drift'); w.getAnimations().forEach((a) => a.cancel()); w.style.translate = t === 'none' ? '0px 0px' : t; w.dataset.x = parseFloat(t) || 0; });
+      }
+      const k = Math.min(1, Math.abs(dx) / BLOW);
+      el.style.setProperty('--blow', k.toFixed(3));
+      if (!Stringless.reducedMotion) words.forEach((w, i) => { w.style.translate = `${(+w.dataset.x + dx * (0.55 + i * 0.05)).toFixed(1)}px ${(-k * 5).toFixed(1)}px`; });
+    };
+    const up = (ev) => {
+      if (ev.pointerId !== e.pointerId) return;
+      removeEventListener('pointermove', move);
+      removeEventListener('pointerup', up);
+      removeEventListener('pointercancel', up);
+      if (!moved) { if (ev.type === 'pointerup') accept(); return; }
+      if (Math.abs(dx) >= BLOW) { dismiss(false, Math.sign(dx)); return; }
+      // Not far enough: the mist drifts back from where it is.
+      el.classList.remove('blowing');
+      el.style.setProperty('--blow', '0');
+      words.forEach((w) => { const t = w.style.translate; w.style.translate = ''; w.animate([{ translate: t }, { translate: '0px 0px' }], { duration: 280, easing: 'cubic-bezier(.3,.7,.3,1)' }); });
+    };
+    addEventListener('pointermove', move);
+    addEventListener('pointerup', up);
+    addEventListener('pointercancel', up);
   }
 
   function show() {
@@ -217,15 +267,17 @@
     schedule();
   }
 
-  async function dismiss(quiet) {
+  async function dismiss(quiet, dir = 1) {
     if (!suggestion || busy) return;
     busy = true;
     const words = vaporEl ? [...vaporEl.querySelectorAll('.w')] : [];
     if (words.length) {
-      const k = Stringless.reducedMotion
-        ? [{ opacity: 1 }, { opacity: 0 }]
-        : [{ opacity: 1 }, { opacity: 0, filter: 'blur(7px)', translate: '26px -7px' }];
-      await Promise.all(words.map((w, i) => w.animate(k, { duration: quiet ? 180 : 420, delay: (quiet ? 0 : i * 30), easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' }).finished.catch(() => null)));
+      // One keyframe: each word leaves from wherever it is now, mid-drift or mid-sweep.
+      await Promise.all(words.map((w, i) => {
+        const x = parseFloat(getComputedStyle(w).translate) || 0;
+        const k = Stringless.reducedMotion ? [{ opacity: 0 }] : [{ opacity: 0, filter: 'blur(7px)', translate: `${(x + dir * 30).toFixed(1)}px -7px` }];
+        return w.animate(k, { duration: quiet ? 180 : 420, delay: (quiet ? 0 : i * 30), easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' }).finished.catch(() => null);
+      }));
     }
     suggestion = null;
     render();

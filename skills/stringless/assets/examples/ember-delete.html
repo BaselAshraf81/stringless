@@ -114,7 +114,7 @@
   .ash[data-sl-state="rehearse"] .heap { filter: brightness(1.25); }
 </style>
 </head>
-<body>
+<body data-sl-pointer>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <filter id="burn-edge" x="-5%" y="-5%" width="110%" height="110%">
     <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="2"/>
@@ -142,38 +142,54 @@
 
 <script src="../runtime/stringless.js"></script>
 <script>
+  // The notes around a change slide to their new place instead of jumping (FLIP): measure them, make the
+  // change, then animate translate from where they were. Animating height would re-lay out the page every frame.
+  function slideNeighbors(stack, change, duration) {
+    const before = new Map([...stack.children].filter((c) => !c.hidden).map((c) => [c, c.getBoundingClientRect().top]));
+    change();
+    const moves = [];
+    for (const [c, top] of before) {
+      if (!c.isConnected || c.hidden || getComputedStyle(c).display === 'none') continue;
+      const dy = top - c.getBoundingClientRect().top;
+      if (Math.abs(dy) > 0.5) moves.push(c.animate([{ translate: `0 ${dy}px` }, { translate: '0 0' }], { duration: Stringless.reducedMotion ? 1 : duration, easing: 'cubic-bezier(.4,0,.2,1)' }));
+    }
+    return Promise.all(moves.map((a) => a.finished.catch(() => null)));
+  }
+
   document.addEventListener('sl:commit', async (e) => {
     const notch = e.target.closest('.notch');
     if (!notch) return;
     const card = notch.closest('.card');
+    const stack = card.parentElement;
     const n = notch.getBoundingClientRect();
-    const height = card.offsetHeight;
     const shards = await Stringless.verbs.shatter(card, { tint: 'ash', origin: { x: n.right, y: n.top } });
 
-    // Close the gap the card leaves, then leave the ash where it stood.
-    const gap = card.animate([{ height: height + 'px', marginBottom: '0px' }, { height: '0px', marginBottom: '-16px' }], { duration: Stringless.reducedMotion ? 1 : 320, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
-    await gap.finished;
-    card.hidden = true;
-    gap.cancel();
-
-    Stringless.remnant({
-      anchor: card,
-      material: 'ash',
-      className: 'ash',
-      label: 'Restore note',
-      restoredText: 'Note restored.',
-      announceText: 'Note burned. Press the ash within 7 seconds to restore it.',
-      duration: 7000,
-      html: '<span class="heap" aria-hidden="true"></span>',
-      async onRestore() {
-        card.hidden = false;
-        const grow = card.animate([{ height: '0px', opacity: 0 }, { height: height + 'px', opacity: 0 }], { duration: Stringless.reducedMotion ? 1 : 260, easing: 'cubic-bezier(.4,0,.2,1)' });
-        await grow.finished;
-        await shards.restore();
-        card.querySelector('.notch').focus({ preventScroll: true });
-      },
-      onExpire() { shards.finish(); card.remove(); }
-    });
+    // The ash takes the card's place, and the notes below slide up to meet it.
+    let ash;
+    slideNeighbors(stack, () => {
+      card.hidden = true;
+      ash = Stringless.remnant({
+        anchor: card,
+        material: 'ash',
+        className: 'ash',
+        label: 'Restore note',
+        restoredText: 'Note restored.',
+        announceText: 'Note burned. Press the ash within 7 seconds to restore it.',
+        duration: 7000,
+        html: '<span class="heap" aria-hidden="true"></span>',
+        async onRestore() {
+          // The notes slide down to make room, then the shards fly back into the card.
+          await slideNeighbors(stack, () => { ash.element.style.display = 'none'; card.hidden = false; }, 260);
+          await shards.restore();
+          card.querySelector('.notch').focus({ preventScroll: true });
+        },
+        onExpire() {
+          shards.finish();
+          slideNeighbors(stack, () => { ash.element.style.display = 'none'; card.remove(); }, 320);
+        }
+      });
+    }, 320);
+    ash.element.animate([{ opacity: 0 }, { opacity: 1 }], { duration: Stringless.reducedMotion ? 1 : 240 });
   });
 </script>
 </body>

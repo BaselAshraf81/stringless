@@ -45,10 +45,14 @@ Starting choreography. LEXICON.md can reassign any verb; then the whole product 
 ## Choreography rules
 
 - **Preview the start, not the end.** A rehearsal shows the beginning of the effect, held. Showing the finished result is a false promise when the user hasn't decided yet.
+- **Preview the change, not the state.** The rehearsal shows the first bit of what the commit will do: ink starting to dry, a corner starting to char. Making the current state stronger, like wet ink glistening harder, tells the user nothing about the action.
+- **The effect follows the tool.** When a tool passes over its target, change the target under the tool and in step with it, never on a timer. The user believes the blotter dried the line because the line went matte where the felt touched it.
+- **One gesture, one outcome.** Tell a tap from a drag by distance (about 6px) and give each its own result; a press that moved is never a tap. Keep drags away from the browser's own gestures: `user-select: none` and `touch-action` on the control, `preventDefault()` on `pointerdown`, and pointer capture while dragging. A drag that selects text or ends in a click is a bug.
 - **One axis, one meaning.** Pick directions once for the product and record them: for example right means forward or send, left means back or undo, down means keep or save, up means publish, into the depth means archive, out of the depth means restore.
 - **Continuity.** An object never teleports. When it moves to another place on screen, it travels or morphs there (View Transitions, `travel`). Users follow things they see move.
 - **Cause first.** The control moves first, then the target answers. A wave that starts at the cursor and arrives at the target explains the cause.
-- **Interruptible.** Every commit can be reversed or redirected mid-flight when the action allows it. Use springs and the Web Animations API (`reverse()`), not fixed CSS keyframes, for anything a user can interrupt.
+- **Interruptible.** Every commit can be reversed or redirected mid-flight when the action allows it. Use springs and the Web Animations API, not fixed CSS keyframes, for anything a user can interrupt.
+- **Start from where it is.** When one motion takes over from another (a commit after a rehearsal, a new choice mid-commit, a leave mid-rehearsal), read the value on screen first, such as `getComputedStyle(el).translate`, then cancel the old animation and start the new one from that value. Never start from the last resting place or a fixed `from` keyframe: cancelling the old animation snaps the object back before the new one moves it. `reverse()` is only safe when the object goes back the way it came. A CSS transition on the same property, or the runtime's `spring().retarget()`, carries the current value for you.
 - **Motion lands in a place.** The end state must be stable, visible and findable: the sent envelope in the outbox, the ash where the card stood.
 
 ## Timing by weight
@@ -85,3 +89,17 @@ Remove:
 - idle loops
 
 The meaning must survive. A reduced-motion save still turns the ink matte, and a reduced-motion delete still leaves the ash.
+## Staying smooth
+Proximity effects run on every pointer move, so per-frame work adds up. Hold 60fps on a mid-range phone; on a laptop, test with a 4x CPU slowdown in DevTools.
+- **Animate transform, opacity and small filters.** They run on the compositor. Width, height, margins, `top` and `left` re-lay out the page on every frame. To open or close a gap, FLIP the neighbors: measure them, make the change, then animate `translate` from where they were (see `ember-delete.html`).
+- **Write per-frame variables low in the tree.** A CSS variable restyles the element it is set on and everything that inherits it, so one on `<html>` or `<body>` that follows the pointer restyles the whole page. Set it on the smallest element that uses it, or register it with `@property` and `inherits: false`. The runtime does both: `--sl-px` and `--sl-py` go only to elements with `data-sl-pointer`, and they don't inherit.
+- **Keep materials small.** Put `data-sl-material` on the surface that catches the light, such as a card or a button, not on a container with hundreds of children. Its light variables change on every pointer frame.
+- **Read, then write.** In a frame, read layout (`getBoundingClientRect`, `offsetWidth`) before you change any style.
+- **One loop.** Use CSS or the Web Animations API for motion, and the runtime's frame loop for pointer work. No animation timers, and no `requestAnimationFrame` loop that runs when nothing moves. Pause work that is off screen or in a hidden tab.
+- **Filters cost per pixel.** Blur, `backdrop-filter` and SVG displacement slow down with the area they cover. Keep them small and off scrolling content.
+- **No long tasks.** Nothing over 50ms at load or on input. Precompute what you can and split the rest across frames.
+To check in Chrome, run this in the console, then point at and use every control. Any warning while pointing or committing is jank to fix.
+```js
+new PerformanceObserver((list) => list.getEntries().forEach((e) => console.warn('long frame', Math.round(e.duration), 'ms')))
+  .observe({ type: 'long-animation-frame', buffered: true });
+```

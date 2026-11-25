@@ -4,7 +4,7 @@ description: Design and build interface components that explain themselves witho
 license: MIT
 metadata:
   author: Basel Ashraf
-  version: "0.1.0"
+  version: "0.2.0"
   homepage: https://github.com/BaselAshraf81/stringless
 ---
 
@@ -77,14 +77,14 @@ These hold at every strangeness level. Build to them without announcing them.
 
 1. **Silent to the eye, fluent to the ear.** Every control has a role and an accessible name. The name also feeds the caption layer.
 2. **Strings on demand.** Pressing `?`, long-pressing, or lingering shows the caption. Users can turn captions on for good.
-3. **Parity.** Whatever a pointer approach reveals, keyboard focus and touch-hold reveal too. Meaning that needs hover is a bug.
+3. **Parity.** Whatever a pointer approach reveals, keyboard focus and touch-hold reveal too. Meaning that needs hover is a bug. It runs both ways: every key action, such as Escape to dismiss, also has a pointer and touch gesture.
 4. **Rehearsals are previews.** Visual and reversible only: no data change, no network write. Leaving, blur and Escape cancel them.
 5. **Weight matches consequence.** Heavy actions take a hold, with press-twice as the alternative, and leave an echo when the action can be undone. Irreversible actions say so through brittle materials and by leaving no remains.
 6. **Reduced motion keeps the meaning.** Replace travel with a state change in place plus a brief highlight. Never just delete the animation.
 7. **Calm at rest.** No idle loops unless a state needs the user, and those settle once it resolves.
 8. **One lexicon.** A material, verb or phase means one thing across the product, recorded in LEXICON.md.
 9. **Content keeps its words.** User data, names, numbers, prices, dates, legal text and error explanations stay text. Stringless removes chrome labels, never information.
-10. **Smooth.** 60fps on a mid-range phone. Filters on small areas only. Pause work that is off screen.
+10. **Smooth.** 60fps on a mid-range phone. Animate transform and opacity, keep filters small, never write inheriting per-frame variables on `<html>` or `<body>`, and pause work that is off screen. See [staying smooth](reference/channels/motion.md#staying-smooth).
 11. **Reachable.** Hit areas stay at least 44 by 44px even when the visible shape is small or odd. Focus rings follow the shape.
 
 ## Setup
@@ -125,7 +125,7 @@ Channels are how a control speaks. Load the ones the design uses:
 | File | Covers |
 |---|---|
 | [channels/material.md](reference/channels/material.md) | The material lexicon: meaning, look, light, physics and sound for each material, plus collisions and inventing new ones |
-| [channels/motion.md](reference/channels/motion.md) | Verbs as motion: rehearsal, commit, echo and still for each verb; timing by weight; direction rules |
+| [channels/motion.md](reference/channels/motion.md) | Verbs as motion: rehearsal, commit, echo and still for each verb; timing by weight; direction rules; staying smooth |
 | [channels/form.md](reference/channels/form.md) | Shape grammar: count as quantity, surface-native controls, vessels, mechanisms, morphing, hit areas |
 | [channels/space.md](reference/channels/space.md) | Binding and tethers, proximity, reach, gravity, depth, spatial continuity |
 | [channels/time.md](reference/channels/time.md) | Phases of matter as state, echo windows, rewind, fluency and hesitation, patina, waiting |

@@ -60,7 +60,7 @@ On each target:
 | `--sl-hold` | the hold progress of the control acting on it |
 | `--sl-intensity` | as above |
 
-On material elements: `--sl-lx`, `--sl-ly` (pointer position in percent of the element, from -60 to 160). On `<html>`: `--sl-px`, `--sl-py` (pointer in pixels), `data-sl-captions="on"`, `data-sl-ready`. CSS `--sl-motion` is 1, or 0 under reduced motion: multiply travel by it.
+On material elements: `--sl-lx`, `--sl-ly` (pointer position in percent of the element, from -60 to 160). On elements with `data-sl-pointer`: `--sl-px`, `--sl-py` (pointer position in viewport pixels). They don't inherit, so a write restyles only that element; a child or pseudo-element that needs them sets `--sl-px: inherit; --sl-py: inherit`. On `<html>`: `data-sl-captions="on"`, `data-sl-ready`. CSS `--sl-motion` is 1, or 0 under reduced motion: multiply travel by it.
 
 ## Writing a rehearsal
 

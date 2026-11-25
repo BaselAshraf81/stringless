@@ -1,7 +1,7 @@
 {
   "name": "stringless",
   "displayName": "Stringless",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Make your UI speak for itself. Designs controls with no text labels: a note burns to delete, wet ink dries to save, glass frosts to go private. 10 commands, a zero-dependency runtime and accessibility checks.",
   "author": {
     "name": "Basel Ashraf",

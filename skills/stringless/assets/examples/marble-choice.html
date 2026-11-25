@@ -136,7 +136,7 @@
   }
 </style>
 </head>
-<body>
+<body data-sl-pointer>
 <main class="order">
   <h1>Your order</h1>
   <fieldset>
@@ -186,7 +186,16 @@
   const shipEl = document.querySelector('.ship');
   const totalEl = document.querySelector('.total');
   let current = inputs.findIndex((i) => i.checked);
-  let x = 0, y = 0, spin = 0, rolling = null, nudge = null;
+  let x = 0, y = 0, spin = 0, rolling = null, nudge = null, rollId = 0;
+
+  // Where the marble is on screen right now, mid-nudge or mid-roll. Every motion starts from here,
+  // never from where it last rested; otherwise cancelling the old animation snaps the marble back.
+  const onScreen = () => {
+    const t = getComputedStyle(marble).translate;
+    const r = parseFloat(getComputedStyle(swirl).rotate);
+    const [tx, ty = 0] = t === 'none' ? [x, y] : t.split(' ').map(parseFloat);
+    return { x: tx, y: ty, spin: Number.isFinite(r) ? r : spin };
+  };
 
   // Layout offsets ignore the tray's tilt, so the marble always lands in the middle of the well.
   const centerOf = (i) => {
@@ -209,18 +218,27 @@
       if (i === current || rolling) return;
       const dir = Math.sign(i - current);
       tray.style.setProperty('--tilt', String(dir));
-      const from = centerOf(current);
+      const home = centerOf(current);
       const to = centerOf(i);
-      if (nudge) nudge.cancel();
       if (Stringless.reducedMotion) return;
       const k = 0.16 * Stringless.fluency.get('choose') < 1 ? 0.16 : 0.1;
-      const dx = (to.x - from.x) * k;
-      nudge = marble.animate([{ translate: `${from.x}px ${from.y}px` }, { translate: `${from.x + dx}px ${from.y - 2}px` }], { duration: 420, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'forwards' });
-      swirl.animate([{ rotate: `${spin}deg` }, { rotate: `${spin + dx * 2.2}deg` }], { duration: 420, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'forwards' });
+      const dx = (to.x - home.x) * k;
+      const now = onScreen();
+      if (nudge) nudge.cancel();
+      swirl.getAnimations().forEach((a) => a.cancel());
+      nudge = marble.animate([{ translate: `${now.x}px ${now.y}px` }, { translate: `${home.x + dx}px ${home.y - 2}px` }], { duration: 420, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'forwards' });
+      swirl.animate([{ rotate: `${now.spin}deg` }, { rotate: `${spin + dx * 2.2}deg` }], { duration: 420, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'forwards' });
     });
     w.addEventListener('sl:leave', () => {
       tray.style.setProperty('--tilt', '0');
-      if (nudge && !rolling) { nudge.reverse(); swirl.getAnimations().forEach((a) => a.reverse()); }
+      if (!nudge || rolling) return;
+      // Settle back from where it is now. reverse() would return to wherever the nudge began.
+      const home = centerOf(current);
+      const now = onScreen();
+      nudge.cancel();
+      swirl.getAnimations().forEach((a) => a.cancel());
+      nudge = marble.animate([{ translate: `${now.x}px ${now.y}px` }, { translate: `${home.x}px ${home.y}px` }], { duration: 320, easing: 'cubic-bezier(.3,.7,.3,1)' });
+      swirl.animate([{ rotate: `${now.spin}deg` }, { rotate: `${spin}deg` }], { duration: 320, easing: 'cubic-bezier(.3,.7,.3,1)' });
     });
   });
 
@@ -240,28 +258,32 @@
     leftWrap.setAttribute('data-left', '');
     setTimeout(() => leftWrap.removeAttribute('data-left'), 120);
 
-    const from = { x, y };
+    // The roll continues from wherever the marble is: leaning toward this well, or halfway to another one.
+    const from = onScreen();
     const to = centerOf(i);
+    const id = ++rollId;
     if (nudge) { nudge.cancel(); nudge = null; }
     swirl.getAnimations().forEach((a) => a.cancel());
     if (rolling) rolling.cancel();
 
     if (Stringless.reducedMotion) {
+      rolling = null;
       place(to.x, to.y, spin);
       Stringless.verbs.crystallize(marble, { duration: 300 });
       return;
     }
 
-    // Roll: over each ridge between wells with a small hop, then a damped glass bounce in the well.
-    const steps = Math.abs(i - prev);
+    // Roll: over each ridge in the way with a small hop, then a damped glass bounce in the well.
+    const gap = Math.abs(centerOf(1).x - centerOf(0).x) || 1;
+    const steps = Math.max(1, Math.round(Math.abs(to.x - from.x) / gap));
     const frames = [];
     const n = 24;
     for (let s = 0; s <= n; s++) {
       const t = s / n;
       const e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
       const px = from.x + (to.x - from.x) * e;
-      const hop = Math.abs(Math.sin(e * Math.PI * steps)) * 10;
-      frames.push({ translate: `${px.toFixed(1)}px ${(from.y - hop).toFixed(1)}px`, offset: t * 0.82 });
+      const py = from.y + (to.y - from.y) * e - Math.abs(Math.sin(e * Math.PI * steps)) * 10;
+      frames.push({ translate: `${px.toFixed(1)}px ${py.toFixed(1)}px`, offset: t * 0.82 });
     }
     frames.push({ translate: `${to.x}px ${to.y - 5}px`, offset: 0.9 });
     frames.push({ translate: `${to.x}px ${to.y}px`, offset: 0.95 });
@@ -270,13 +292,15 @@
     const duration = 520 + steps * 260;
     const roll = (to.x - from.x) / 23 * (180 / Math.PI);
     rolling = marble.animate(frames, { duration, fill: 'forwards' });
-    swirl.animate([{ rotate: `${spin}deg` }, { rotate: `${spin + roll}deg` }], { duration: duration * 0.85, easing: 'cubic-bezier(.45,0,.3,1)', fill: 'forwards' });
-    setTimeout(() => Stringless.sound.play('glass'), duration * 0.9);
+    swirl.animate([{ rotate: `${from.spin}deg` }, { rotate: `${from.spin + roll}deg` }], { duration: duration * 0.85, easing: 'cubic-bezier(.45,0,.3,1)', fill: 'forwards' });
+    setTimeout(() => { if (id === rollId) Stringless.sound.play('glass'); }, duration * 0.9);
     await rolling.finished.catch(() => null);
+    // A newer choice took over mid-roll. Its animation now owns the marble; don't touch it.
+    if (id !== rollId) return;
     rolling.cancel();
     swirl.getAnimations().forEach((a) => a.cancel());
     rolling = null;
-    place(to.x, to.y, spin + roll);
+    place(to.x, to.y, from.spin + roll);
   }
 </script>
 </body>
