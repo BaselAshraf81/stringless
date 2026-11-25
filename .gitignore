@@ -1,7 +1,9 @@
 # Working notes and scratch files
 research/
 
-# Test output
+# Build output and test output
+site/dist/
+.wrangler/
 tests/shots/
 
 # Per-project working files the skill writes in user projects

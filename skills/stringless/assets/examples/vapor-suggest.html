@@ -119,6 +119,8 @@
 
 <script src="../runtime/stringless.js"></script>
 <script>
+  // ?embed: shown inside another page. Never take focus from it.
+  const embed = new URLSearchParams(location.search).has('embed');
   const ta = document.getElementById('reply');
   const mirror = document.querySelector('.mirror');
   let suggestion = null;   // { words: [{ text, c }] }
@@ -170,7 +172,7 @@
   }
 
   function show() {
-    if (suggestion || busy || document.activeElement !== ta || !caretAtEnd()) return;
+    if (suggestion || busy || (!embed && document.activeElement !== ta) || !caretAtEnd()) return;
     suggestion = nextSuggestion(ta.value);
     if (!suggestion) return;
     render();
@@ -197,10 +199,11 @@
       }));
     }
     suggestion = null;
-    ta.focus();
+    const focused = document.activeElement === ta;
+    if (!embed || focused) ta.focus();
     ta.setSelectionRange(ta.value.length, ta.value.length);
     const start = ta.value.length;
-    if (!document.execCommand('insertText', false, text)) ta.setRangeText(text, start, start, 'end');
+    if (!(document.activeElement === ta && document.execCommand('insertText', false, text))) ta.setRangeText(text, start, start, 'end');
     wetFrom = start; wetTo = ta.value.length;
     clearTimeout(dryTimer);
     dryTimer = 1;
@@ -268,8 +271,8 @@
   }
 
   render();
-  ta.focus();
   ta.setSelectionRange(ta.value.length, ta.value.length);
+  if (!embed) ta.focus();
   schedule();
 </script>
 </body>

@@ -199,6 +199,8 @@
   const fname = print.querySelector('.fname');
   const tray = document.querySelector('.tray');
   const names = { pdf: 'PDF', csv: 'CSV', png: 'PNG' };
+  // ?embed: shown inside another page. The print lands in the tray; nothing downloads until it is clicked.
+  const embed = new URLSearchParams(location.search).has('embed');
   let kind = 'pdf';
   let busy = false;
 
@@ -296,7 +298,7 @@
       tray.appendChild(item);
     }
     Stringless.verbs.settle(link);
-    link.click();
+    if (!embed) link.click();
     Stringless.announce(`Exported ${file}. It is in the tray.`);
     busy = false;
   });

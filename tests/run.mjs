@@ -50,8 +50,8 @@ try { out = JSON.parse(r.stdout); } catch {}
 ok(r.status === 2, 'stringcheck exits 2 on the bad fixture');
 const rules = new Set((out.findings || []).map((f) => f.rule));
 for (const rule of ['icon-only-name', 'clickable-div', 'sl-focus', 'sl-role', 'sl-weight', 'sl-painted-words', 'focus-removed', 'reduced-motion', 'idle-loop', 'rehearsal-write', 'generic-label']) ok(rules.has(rule), `stringcheck catches ${rule}`);
-r = node(join(skill, 'scripts', 'stringcheck.mjs'), ['skills/stringless/assets/examples', 'gallery']);
-ok(r.status === 0 && /0 error\(s\), 0 warning\(s\)/.test(r.stdout), 'examples and gallery pass stringcheck with no warnings');
+r = node(join(skill, 'scripts', 'stringcheck.mjs'), ['skills/stringless/assets/examples', 'gallery', 'site/index.html', 'site/404.html']);
+ok(r.status === 0 && /0 error\(s\), 0 warning\(s\)/.test(r.stdout), 'examples, gallery and site pass stringcheck with no warnings');
 r = node(join(skill, 'scripts', 'roll.mjs'), ['--verb', 'delete', '--object', 'note', '--json', '--seed', '7']);
 try { const j = JSON.parse(r.stdout); ok(j.results.length === 1 && j.results[0].material && j.results[0].constraint, 'roll returns seeds'); } catch { ok(false, 'roll returns JSON'); }
 const a = node(join(skill, 'scripts', 'roll.mjs'), ['--seed', '42', '--json']).stdout;
@@ -64,6 +64,8 @@ ok(r.status === 0, 'runtime parses');
 
 // ---- browser scenarios
 if (!noBrowser) {
+  r = node(join(root, 'site', 'build.mjs'), []);
+  ok(r.status === 0, 'the site builds');
   const port = 4300 + Math.floor(Math.random() * 400);
   const server = spawn(process.execPath, [join(skill, 'scripts', 'serve.mjs'), root, '--port', String(port)], { stdio: 'ignore' });
   await new Promise((res) => setTimeout(res, 600));

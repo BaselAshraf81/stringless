@@ -48,8 +48,10 @@ export default async (p) => {
   await p.key('Enter', 'Enter', { vk: 13, text: '\r' });
   await p.sleep(200);
   await p.key('Enter', 'Enter', { vk: 13, text: '\r' });
-  await p.sleep(1500);
-  p.expect(await p.eval(visibleCards) === 2, 'second Enter burns');
+  // The burn runs about a second; give a loaded machine up to four.
+  let left = 3;
+  for (let t = 0; t < 40 && left !== 2; t++) { await p.sleep(100); left = await p.eval(visibleCards); }
+  p.expect(left === 2, 'second Enter burns');
   await p.reducedMotion(true);
   await p.goto('skills/stringless/assets/examples/ember-delete.html');
   await p.eval(`document.querySelector('.card:nth-child(3) .notch').focus()`);

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stringless: make your UI speak for itself</title>
+<meta name="description" content="An experimental design method and agent skill by Basel Ashraf. Controls show what they do through material, motion and time, so they need no labels.">
+<link rel="canonical" href="https://stringless.baselashraf.com/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://stringless.baselashraf.com/">
+<meta property="og:title" content="Stringless: make your UI speak for itself">
+<meta property="og:description" content="Controls that show what they do, so they need no labels. A skill for Claude Code and other coding agents.">
+<meta property="og:image" content="https://stringless.baselashraf.com/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#04070c">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/atkinson-next-200.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="runtime/stringless.css">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<canvas id="wake" aria-hidden="true"></canvas>
+
+<header class="top">
+  <a class="mark" href="/" aria-label="Stringless home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M22.8 9.6C21.6 7.1 19.1 5.6 16 5.6c-3.7 0-6.6 2.1-6.6 5.1 0 2.5 2 3.7 4.2 4.4"/><path d="M18.6 16.9c2.4.9 4.3 2.2 4.3 4.8 0 3.1-3 5.1-6.8 5.1-3.3 0-5.8-1.4-6.9-4"/></svg>
+  </a>
+  <nav aria-label="Site">
+    <a href="#install">Install</a>
+    <a href="https://github.com/BaselAshraf81/stringless">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" aria-labelledby="title">
+    <div class="intro">
+      <h1 id="title">Stringless</h1>
+      <div>
+        <p class="lede">Make your UI speak for itself.</p>
+        <p class="sub">A new, experimental way to design interfaces. Controls show what they do through material, motion and time, so they need no labels. An agent skill by <a href="https://baselashraf.com">Basel Ashraf</a>.</p>
+        <!-- stringcheck-disable sl-painted-words: the command is the content being copied -->
+        <button class="cmd" type="button" data-sl-verb="copy" data-sl-target="self" aria-label="Copy install command" aria-describedby="cmd-hero"><code id="cmd-hero">npx skills add BaselAshraf81/stringless</code></button>
+      </div>
+    </div>
+
+    <button class="take sr-only" type="button">Stop the demo and try it yourself</button>
+    <div class="stage" id="stage" role="region" aria-roledescription="live demo" aria-label="Stringless demo" aria-describedby="stage-desc">
+      <div class="screen"></div>
+      <div class="overlay" aria-hidden="true"><canvas class="trail"></canvas><span class="ghost"></span></div>
+    </div>
+    <p id="stage-desc" class="sr-only">A ghost pointer uses six controls that have no labels. It burns a note, dries wet ink, frosts a photo, rolls a marble to pick shipping, accepts an AI suggestion and exports a file. Move your pointer into the demo, or use the button before it, to try them yourself.</p>
+    <div class="under">
+      <div class="scenes" role="group" aria-label="Scenes">
+        <button type="button">delete</button>
+        <button type="button">save</button>
+        <button type="button">private</button>
+        <button type="button">choose</button>
+        <button type="button">suggest</button>
+        <button type="button">export</button>
+      </div>
+      <p class="hint">It's live. Reach in and try it.</p>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="five">
+    <h2 id="five">Every control answers five questions without a word.</h2>
+    <dl class="five">
+      <div><dt>What is it?</dt><dd><b>Material.</b> Paper is a document. Glass is something you can see through.</dd></div>
+      <div><dt>What does it touch?</dt><dd><b>Space.</b> The thing it acts on wakes up as you come near.</dd></div>
+      <div><dt>What will it do?</dt><dd><b>Motion.</b> It rehearses. Hover the corner and the card starts to char.</dd></div>
+      <div><dt>What does it cost?</dt><dd><b>Physics.</b> Burning takes a hold. Saving takes a tap.</dd></div>
+      <div><dt>Where is it in time?</dt><dd><b>Phase.</b> Wet ink is unsaved. Dry ink is saved.</dd></div>
+    </dl>
+  </section>
+
+  <section class="block floor" aria-labelledby="ear">
+    <h2 id="ear">The words are still there for anyone who needs them.</h2>
+    <ul>
+      <li>Every control has a name that screen readers read.</li>
+      <li>Press <kbd>?</kbd> and the words come back.</li>
+      <li>Keyboard and touch get everything hover gets.</li>
+      <li>Reduced motion keeps the meaning.</li>
+      <li>Heavy actions take a hold and leave an undo.</li>
+      <li>Content keeps its words: names, prices, errors.</li>
+    </ul>
+  </section>
+
+  <section class="block" aria-labelledby="cmds">
+    <h2 id="cmds">Ten commands.</h2>
+    <p class="dice">Before it invents anything, it rolls dice: 92 materials, 50 crafts, 53 natural effects and 60 mechanisms. Your send button won't be the paper plane everyone else ships.</p>
+    <ul class="cmds">
+      <li><code>init</code><span>Learn the product.</span></li>
+      <li><code>lexicon</code><span>Decide what each material means.</span></li>
+      <li><code>map</code><span>Find every label on a screen.</span></li>
+      <li><code>stage</code><span>Wireframe a screen as a stage.</span></li>
+      <li><code>forge</code><span>Build one control, end to end.</span></li>
+      <li><code>unstring</code><span>Take the labels off existing UI.</span></li>
+      <li><code>dream</code><span>Three wild concepts before any code.</span></li>
+      <li><code>guess</code><span>Test with a reader who only sees pixels.</span></li>
+      <li><code>audit</code><span>Check access, motion and speed.</span></li>
+      <li><code>tune</code><span>Push one channel further.</span></li>
+    </ul>
+  </section>
+
+  <section class="block" id="install" aria-labelledby="inst">
+    <h2 id="inst">Install.</h2>
+    <div class="ways">
+      <div class="way">
+        <div class="who"><h3>Claude Code</h3></div>
+        <div class="stack">
+          <!-- stringcheck-disable sl-painted-words: the command is the content being copied -->
+          <button class="cmd" type="button" data-sl-verb="copy" data-sl-target="self" aria-label="Copy command" aria-describedby="cmd-cc1"><code id="cmd-cc1">/plugin marketplace add BaselAshraf81/stringless</code></button>
+          <!-- stringcheck-disable sl-painted-words: the command is the content being copied -->
+          <button class="cmd" type="button" data-sl-verb="copy" data-sl-target="self" aria-label="Copy command" aria-describedby="cmd-cc2"><code id="cmd-cc2">/plugin install stringless@stringless</code></button>
+        </div>
+      </div>
+      <div class="way">
+        <div class="who"><h3>Any other agent</h3><p>Cursor, Codex, Gemini CLI, Copilot, Kiro and more.</p></div>
+        <div class="stack">
+          <!-- stringcheck-disable sl-painted-words: the command is the content being copied -->
+          <button class="cmd" type="button" data-sl-verb="copy" data-sl-target="self" aria-label="Copy command" aria-describedby="cmd-any"><code id="cmd-any">npx skills add BaselAshraf81/stringless</code></button>
+        </div>
+      </div>
+      <div class="way">
+        <div class="who"><h3>Then ask</h3></div>
+        <div class="stack">
+          <!-- stringcheck-disable sl-painted-words: the command is the content being copied -->
+          <button class="cmd" type="button" data-sl-verb="copy" data-sl-target="self" aria-label="Copy command" aria-describedby="cmd-ask"><code id="cmd-ask">/stringless forge a delete control for my notes</code></button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Made by <a href="https://baselashraf.com">Basel Ashraf</a>. Stringless builds on ideas from <a href="https://github.com/pbakaus/impeccable">Impeccable</a> by Paul Bakaus, which is licensed under <a href="https://github.com/pbakaus/impeccable/blob/main/LICENSE">Apache 2.0</a>.</p>
+  <p><a href="https://github.com/BaselAshraf81/stringless">Source on GitHub</a>, <a href="https://github.com/BaselAshraf81/stringless/blob/main/LICENSE">MIT license</a>.</p>
+</footer>
+
+<script src="runtime/stringless.js"></script>
+<script src="reel.js"></script>
+</body>
+</html>

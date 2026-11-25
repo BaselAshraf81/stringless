@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stringless social card</title>
+<!-- The 1200x630 social card. Not deployed: tests/capture/og.mjs renders it to site/og.jpg. -->
+<link rel="stylesheet" href="site.css">
+<style>
+  html, body { width: 1200px; height: 630px; margin: 0; overflow: hidden; }
+  body { position: relative; background: radial-gradient(760px 560px at 80% 40%, #0c1c31, transparent 72%), radial-gradient(700px 500px at 0% 100%, #081221, transparent 70%), var(--sea); }
+  .words { position: absolute; left: 76px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; }
+  .words h1 { font-size: 146px; margin: 0 0 30px -6px; }
+  .words .lede { font-size: 40px; margin: 0 0 16px; }
+  .words .by { margin: 0; font-size: 24px; color: var(--muted); }
+  .words .url { position: absolute; left: 0; bottom: 54px; margin: 0; font: 700 21px var(--font); color: var(--wake); }
+  .frame { position: absolute; left: 700px; top: 64px; width: 440px; height: 502px; border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px rgb(120 200 255 / .2), 0 30px 90px -26px rgb(31 123 255 / .6); }
+  .frame iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; }
+  .over { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+  .over svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .thread { fill: none; stroke: var(--thread); stroke-width: 2.4; stroke-linecap: round; filter: drop-shadow(0 0 4px rgb(255 75 62 / .8)); }
+  .wakeline { fill: none; stroke: rgb(76 212 255 / .7); stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 6px rgb(76 212 255 / .9)); }
+  .over .ghost { opacity: 1; }
+  .over .old { translate: -50% 0; font-size: 17px; }
+</style>
+</head>
+<body>
+<div class="words">
+  <h1>Stringless</h1>
+  <p class="lede">Make your UI speak for itself.</p>
+  <p class="by">A new way to design interfaces, by Basel Ashraf.</p>
+  <p class="url">stringless.baselashraf.com</p>
+</div>
+<div class="frame"><iframe id="demo" src="../skills/stringless/assets/examples/ember-delete.html" title="demo"></iframe></div>
+<div class="over"><svg id="lines"></svg><span class="ghost" id="ghost"></span><span class="old danger" id="old">Delete</span></div>
+<script>
+  const f = document.getElementById('demo');
+  const frame = f.parentElement;
+  const FX = frame.offsetLeft;
+  const FY = frame.offsetTop;
+  f.style.width = '1000px';
+  f.style.height = '900px';
+  f.addEventListener('load', () => {
+    const win = f.contentWindow;
+    const doc = win.document;
+    if (win.Stringless) { win.Stringless.config.hesitate = 1e9; win.Stringless.config.memory = false; }
+    const cards = [...doc.querySelectorAll('.card')];
+    const box = cards.reduce((b, c) => {
+      const r = c.getBoundingClientRect();
+      return { l: Math.min(b.l, r.left), t: Math.min(b.t, r.top), r: Math.max(b.r, r.right), b: Math.max(b.b, r.bottom) };
+    }, { l: 1e9, t: 1e9, r: -1e9, b: -1e9 });
+    // Fit the notes to the frame, centered.
+    const s = (frame.clientWidth * 0.84) / (box.r - box.l);
+    const tx = frame.clientWidth / 2 - ((box.l + box.r) / 2) * s;
+    const ty = frame.clientHeight / 2 - ((box.t + box.b) / 2) * s;
+    f.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+    const P = (x, y) => ({ x: FX + tx + x * s, y: FY + ty + y * s });
+
+    // A ghost hovers the notch of the middle note, so it rehearses its burn.
+    const card = cards[1];
+    const notch = card.querySelector('.notch');
+    const nr = notch.getBoundingClientRect();
+    const nx = nr.left + nr.width * 0.4;
+    const ny = nr.top + nr.height * 0.55;
+    const fire = (el, type) => el.dispatchEvent(new win.PointerEvent(type, { bubbles: type !== 'pointerenter', clientX: nx, clientY: ny, pointerId: 7, pointerType: 'mouse', isPrimary: true, view: win }));
+    const chain = [];
+    for (let n = doc.elementFromPoint(nx, ny); n; n = n.parentElement) chain.unshift(n);
+    chain.forEach((n) => fire(n, 'pointerenter'));
+    setInterval(() => fire(doc.elementFromPoint(nx, ny) || notch, 'pointermove'), 50);
+    const g = P(nx, ny);
+    document.getElementById('ghost').style.translate = `${g.x}px ${g.y}px`;
+    const w0 = { x: FX + frame.clientWidth * 0.64, y: FY + frame.clientHeight - 1 };
+    const lines = document.getElementById('lines');
+    lines.innerHTML = `<path class="wakeline" d="M${w0.x} ${w0.y} C ${w0.x + 30} ${w0.y - 90}, ${g.x + 34} ${g.y + 90}, ${g.x} ${g.y}"/>`;
+
+    // The old labeled button falls out of the interface on a cut string.
+    const bx = FX - 34;
+    const by = 448;
+    const old = document.getElementById('old');
+    old.style.left = bx + 'px';
+    old.style.top = by + 'px';
+    old.style.rotate = '-15deg';
+    const cut = 190;
+    const end = { x: bx - 5, y: by + 1 };
+    lines.innerHTML +=
+      `<path class="thread" d="M${bx + 6} -6 L ${bx + 6} ${cut - 13}"/>` +
+      `<path class="thread" d="M${bx + 5} ${cut + 13} C ${bx + 3} ${cut + 90}, ${end.x + 12} ${end.y - 110}, ${end.x} ${end.y}"/>` +
+      [[-4, -9, -11, -15], [9, -8, 15, -14], [-3, 9, -11, 13], [10, 9, 17, 6], [3, -12, 4, -20]]
+        .map(([a, b, c, d]) => `<path class="thread" style="stroke-width:1.6" d="M${bx + 6 + a} ${cut + b} L ${bx + 6 + c} ${cut + d}"/>`).join('');
+    document.documentElement.dataset.ready = '1';
+  });
+</script>
+</body>
+</html>
