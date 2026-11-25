@@ -4,7 +4,7 @@ Deepen one channel of an existing stringless component. Read the channel's file 
 
 ## material
 1. A texture and color that match the lexicon.
-2. A light response: the highlight follows the pointer (`--sl-lx`, `--sl-ly`), touch point or device tilt.
+2. A light response: the highlight follows the pointer (`--sl-lx`, `--sl-ly`), touch point or device tilt (`Stringless.light.tilt()`, see [touch](touch.md)).
 3. Physics: commit motion uses the material's spring.
 4. Phases: the material changes state (wet to dry, clear to frosted).
 5. Sound and haptics, opt-in.

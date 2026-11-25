@@ -28,6 +28,7 @@ Spring presets (mass, stiffness, damping), shared with the web runtime: paper 0.
 - **Haptics are real.** iOS and Android haptics are much richer than the web's Vibration API. Map them to weight: light, medium, heavy, and a distinct pattern for refusal.
 - **System gestures win.** Edge swipes, the home indicator and back gestures belong to the system. Keep stringless drags away from screen edges.
 - **Long press belongs to the app.** Captions on long press are safe because they don't commit.
+- **The rest of [touch](touch.md) applies too:** occlusion, reach, touch gestures and their tap paths.
 
 ## Verify
 

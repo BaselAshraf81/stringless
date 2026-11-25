@@ -4,7 +4,7 @@ Check stringless work against the floor. Report findings by priority; fix them w
 
 ## 1. Automated
 
-Run `node <skill-dir>/scripts/stringcheck.mjs <files or folders>`. It reports controls with no accessible name, controls that can't be focused, heavy-sounding verbs without heavy weight, removed outlines, hover rules with no focus twin, motion with no reduced-motion handling, idle infinite loops, words painted into controls, and generic labels.
+Run `node <skill-dir>/scripts/stringcheck.mjs <files or folders>`. It reports controls with no accessible name, controls that can't be focused, heavy-sounding verbs without heavy weight, removed outlines, hover rules with no focus twin, motion with no reduced-motion handling, idle infinite loops, words painted into controls, and generic labels. When Impeccable is installed, also run `npx impeccable detect <files or folders>` for visual slop such as cramped padding and skipped headings.
 
 ## 2. By hand
 
@@ -14,7 +14,7 @@ Use the browser for each control:
 |---|---|
 | Name | Every control has a role and a name a screen reader reads; toggles expose state (`aria-pressed`, `aria-checked`, `aria-expanded`) |
 | Keyboard | Tab reaches it in a logical order; focus shows approach and rehearsal; Enter or Space commits; heavy actions need two presses with an announcement in between; Escape cancels |
-| Touch | Touch-hold shows the rehearsal; nothing needs hover; every key action has a touch gesture; a drag never selects text or counts as a tap; targets are at least 44 by 44px |
+| Touch | Touch-down shows the rehearsal where the finger doesn't cover it; nothing needs hover and no `:hover` style sticks after a tap; every key action has a touch gesture; a drag never selects text, counts as a tap or blocks scrolling; double tap doesn't zoom; captions appear above the finger; targets are at least 44 by 44px ([touch](touch.md)) |
 | Captions | `?` toggles captions; a long press shows one; hesitation shows one |
 | Reduced motion | Every verb has a still version that keeps the meaning; no idle loops |
 | Echo | Heavy actions leave a focusable remnant with an undo window that's announced |

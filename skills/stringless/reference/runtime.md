@@ -29,7 +29,8 @@ With a bundler: `import './vendor/stringless/stringless.js'` and import the CSS 
 | `data-sl-tether` | `line` | draws a line to the target while rehearsing |
 | `data-sl-lean` | (present) | translates the control a few pixels toward its target on approach |
 | `data-sl-id` | stable id | counts uses for patina (`--sl-wear`) |
-| `data-sl-caption` | `top`, `bottom` (default), `left`, `right`, `none` | where captions appear |
+| `data-sl-caption` | `top`, `bottom` (default; `top` after a touch), `left`, `right`, `none` | where captions appear |
+| `data-sl-intro` | `none` | skips the one-time first-view introduction on touch screens |
 | `data-sl-hesitate` | milliseconds (default 1600) | rehearsal time before the hesitation caption |
 
 The control must be focusable and named: use a `<button>` with `aria-label`, or set `role` and `tabindex="0"`. The runtime warns in the console on localhost when either is missing.
@@ -93,8 +94,9 @@ For heavy controls, your click handlers get one click, sent when the effect comp
 ## JavaScript API
 
 ```js
-Stringless.init({ radius, hold, armWindow, armLevel, hesitate, peek, memory, captionKey, armHint, dev })
+Stringless.init({ radius, hold, armWindow, armLevel, intro, hesitate, peek, memory, captionKey, armHint, dev })
 Stringless.refresh()                         // rescan, if you changed attributes in bulk
+Stringless.light.tilt()                      // from a tap: material light follows the phone's tilt; resolves false if refused
 
 Stringless.verbs.shatter(el, { origin, tint: 'ash', gravity, duration })   // -> handle
 Stringless.verbs.dissolve(el, { blur, rise, duration })                     // -> handle
@@ -141,5 +143,5 @@ Verbs respect reduced motion on their own. `shatter`, `dissolve` and `fold` hide
 
 - **Pointer**: proximity grows `--sl-near`; hover rehearses; leaving reverses. Heavy controls share one progress, `--sl-hold`: holding grows it and commits at 1; a tap arms at `armLevel` (0.2); holding again continues from there; a second tap plays the rest, then commits. Releasing early cools it back.
 - **Keyboard**: focus-visible rehearses; Enter and Space commit; heavy controls arm on the first press (showing `armLevel` of the effect), announce "Press again to confirm", and on a second press within 4 seconds play the rest, then commit; Escape and blur cancel. `?` toggles captions anywhere outside text fields.
-- **Touch**: touch-hold rehearses; a long press on a light control shows its caption without committing; heavy controls commit when the hold completes, and a tap arms them like a key press.
+- **Touch**: touch-down rehearses; a long press shows the caption above the finger without committing; heavy controls commit when the hold completes, and a tap arms them like a key press. On touch screens each verb introduces itself once, the first time it is on screen, until the user knows it. Controls don't zoom on double tap or select text on long press. See [touch](touch.md).
 - **Memory**: uses and hesitations per verb, and use counts per `data-sl-id`, persist in localStorage. `Stringless.init({ memory: false })` turns persistence off.

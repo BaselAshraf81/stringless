@@ -45,7 +45,7 @@ Rungs 4 and 5 live in the caption layer as fallbacks. They are never the design.
 A control reveals more as the user gives it more attention:
 
 0. **Rest.** Silhouette and material say the domain. Still, unless the state needs the user.
-1. **Approach.** The pointer nears or focus lands. The control wakes, leans toward its target and catches the light. The target is marked.
+1. **Approach.** The pointer nears or focus lands (on touch, the control introduces itself once on first view). The control wakes, leans toward its target and catches the light. The target is marked.
 2. **Rehearse.** Hover, focus or touch-hold. The target plays the first part of the effect and holds it there. Leaving plays it backwards. Nothing has changed yet.
 3. **Commit.** The gesture fits the weight: tap for light actions, hold or press twice for heavy ones. The motion continues from wherever the rehearsal stands.
 4. **Echo.** The result lands where the rehearsal promised. A remnant stays for a while and is the way back.
@@ -86,6 +86,7 @@ These hold at every strangeness level. Build to them without announcing them.
 9. **Content keeps its words.** User data, names, numbers, prices, dates, legal text and error explanations stay text. Stringless removes chrome labels, never information.
 10. **Smooth.** 60fps on a mid-range phone. Animate transform and opacity, keep filters small, never write inheriting per-frame variables on `<html>` or `<body>`, and pause work that is off screen. See [staying smooth](reference/channels/motion.md#staying-smooth).
 11. **Reachable.** Hit areas stay at least 44 by 44px even when the visible shape is small or odd. Focus rings follow the shape.
+12. **Made for fingers too.** A finger has no hover, covers what it presses, and shares long press, double tap and edge swipes with the browser. Every control gets a touch version in the same metaphor: see [touch](reference/touch.md).
 
 ## Setup
 
@@ -146,14 +147,15 @@ The catalog holds starting concepts for common needs. They are starting points, 
 - **Runtime.** `<skill-dir>/assets/runtime/` holds `stringless.js` and `stringless.css`: proximity fields, rehearsal states, target previews, weighted holds, tethers, material light, springs, verbs (shatter, dissolve, fold, travel, pour, ripple, refuse, settle, crystallize), fluency, hesitation captions, patina, opt-in sound and haptics, and announcements. It is plain data attributes plus CSS variables, so it works with any framework. Install it with `node <skill-dir>/scripts/install-runtime.mjs`. API: [reference/runtime.md](reference/runtime.md).
 - **Custom.** The runtime is the floor, not the ceiling. Reach for SVG filters, clip-path and masks, `@property`, `linear()` springs, View Transitions, canvas, WebGL or WebGPU whenever the concept needs them, with a fallback that keeps the meaning.
 - **Examples.** `<skill-dir>/assets/examples/` holds six working components, each with its five answers in a comment at the top: `wet-ink-save` (save), `ember-delete` (heavy delete with ash undo), `frost-privacy` (switch), `marble-choice` (single choice), `vapor-suggest` (AI suggestions), `paper-export` (export with real files). Read one to calibrate the quality bar. Don't copy its metaphor unless the lexicon assigns it.
+- **Touch.** Read [reference/touch.md](reference/touch.md) before building any control people will use on a phone. Touch changes rest, approach, captions and gestures, and adds gestures a mouse doesn't have.
 - **Native.** SwiftUI, Jetpack Compose, Flutter or React Native: read [reference/native.md](reference/native.md). The runtime is web-only.
-- **Other design skills.** When Impeccable or a similar skill is installed, it owns the visual world, typography and layout. Stringless owns how controls express intent. Follow DESIGN.md for palette and type.
+- **Other design skills.** When Impeccable or a similar skill is installed, it owns the visual world, typography and layout. Stringless owns how controls express intent. Follow DESIGN.md for palette and type. Impeccable's `adapt` covers layout across screen sizes, and `npx impeccable detect` finds visual slop that stringcheck doesn't look for.
 
 ## Verify
 
 Verify in bounded passes. Build fully, then inspect once in a batch, fix everything that batch shows, confirm with at most one more round, and stop.
 
-- Capture each control at rest, approach, rehearse, commit and echo. Do a keyboard pass, touch emulation and reduced motion.
+- Capture each control at rest, approach, rehearse, commit and echo. Do a keyboard pass, a touch pass ([touch](reference/touch.md#verify-on-touch)) and reduced motion.
 - Run `node <skill-dir>/scripts/stringcheck.mjs <changed files or folders>` and fix errors.
 - Run `guess` on anything at strangeness 3 or higher when screenshots are possible.
 

@@ -23,6 +23,7 @@ Each concept must come from a different seed family (material, craft, phenomenon
 - **Five answers**, one line each.
 - **Stages**: rest, approach, rehearse, commit, echo, one short line each.
 - **Still** version for reduced motion, one line.
+- **Under a finger**: what touch-down shows, where the hand is, and any touch gesture the concept invites, one line.
 - **Cost**: browser features, performance risk, build effort (small, medium, large).
 - **Risk**: what could make it unreadable or annoying.
 

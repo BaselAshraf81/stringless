@@ -22,7 +22,7 @@ The runtime sets `--sl-near` from 0 (at the radius, default 120px) to 1 (on the 
 - **Wake, don't flash.** The response grows smoothly with distance. Nothing pops at a threshold.
 - **Make the near response small.** A shift of 1 to 3px, a light change, a glow on the target. Enough to say "I'm about this."
 - **Point at the cause.** Use `--sl-dx` and `--sl-dy` for highlights and leans, so the control looks at the user.
-- **Touch has no approach.** Touch-hold gives the rehearsal instead; the runtime does this. Keyboard focus gives approach and rehearsal at once.
+- **Touch has no approach.** Touch-down gives the rehearsal, and the runtime introduces each verb once on first view; see [touch](../touch.md). Keyboard focus gives approach and rehearsal at once.
 - **Control density.** When controls sit close together, reduce `data-sl-radius` so several don't wake at once.
 
 ## Reach

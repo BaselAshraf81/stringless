@@ -48,7 +48,7 @@ The runtime ships `data-sl-material` styles for paper, ink, graphite, glass, met
 - **One material, one meaning.** If glass means privacy, a glass button can't mean "preview" somewhere else. A material can carry several verbs that share its meaning: paper folds, posts and burns.
 - **Don't pick by mood.** "Glass looks premium" is how glassmorphism became slop. The question is what the material does.
 - **Show the material through what it does.** A paper texture that never folds, tears, takes ink or flutters is a costume. At least one behavior per material must appear somewhere in the product.
-- **Light makes it real.** A texture under fixed lighting looks printed. Let the highlight follow the pointer or the device tilt. Touch: the last touch point. Keyboard: a fixed key light from the top left.
+- **Light makes it real.** A texture under fixed lighting looks printed. Let the highlight follow the pointer or the device tilt (`Stringless.light.tilt()`). Touch: the last touch point. Keyboard: a fixed key light from the top left.
 - **Keep data readable.** Texture goes under text at low contrast. Body text on a textured surface still meets 4.5:1.
 - **Physical colors stay physical.** Paper is not black in dark mode. Put paper on a dark desk instead. A dark theme changes the world around the objects, not the objects.
 

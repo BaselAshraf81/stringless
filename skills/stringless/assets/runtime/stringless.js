@@ -29,6 +29,7 @@
     hold: 1100,
     armWindow: 4000,
     armLevel: 0.2,
+    intro: true,
     hesitate: 1600,
     peek: 1800,
     memory: true,
@@ -314,8 +315,11 @@
   const visible = new Set();
   const bound = new WeakSet();
   const targetSources = new Map();
-  const pointer = { x: -9999, y: -9999, type: 'mouse', active: false };
+  const pointer = { x: -9999, y: -9999, type: 'mouse', active: false, at: 0 };
+  // Only a mouse or pen can approach. A finger or the phone's tilt moves the light, never proximity.
+  const aiming = () => pointer.type === 'mouse' || pointer.type === 'pen';
   let io = null;
+  let introIO = null;
   let mo = null;
   let raf = 0;
   let rectsDirty = true;
@@ -386,6 +390,7 @@
     if (el.matches(MATERIAL) && !lit.has(el)) lit.set(el, { rect: null });
     if (el.matches(POINTER)) pointed.add(el);
     if (io) io.observe(el);
+    if (introIO && el.matches(CONTROL)) introIO.observe(el);
     rectsDirty = true;
   }
   function unregisterControl(el) {
@@ -401,6 +406,7 @@
     pointed.delete(el);
     visible.delete(el);
     if (io) io.unobserve(el);
+    if (introIO) introIO.unobserve(el);
   }
   function scan(node) {
     if (!node || node.nodeType !== 1) return;
@@ -591,12 +597,14 @@
     const c = s.caption;
     if (!c) return;
     const r = s.el.getBoundingClientRect();
-    const side = s.el.getAttribute('data-sl-caption') || 'bottom';
+    // On touch the hand comes from below and covers the control, so captions go above the finger.
+    const side = s.el.getAttribute('data-sl-caption') || (pointer.type === 'touch' ? 'top' : 'bottom');
     const cw = c.offsetWidth;
     const ch = c.offsetHeight;
     let x = r.left + r.width / 2;
     let y = r.bottom + 8;
     if (side === 'top' || (side === 'bottom' && y + ch > innerHeight - 4)) y = r.top - ch - 8;
+    if (side === 'top' && y < 4) y = r.bottom + 8;
     if (side === 'left') { x = r.left - cw / 2 - 8; y = r.top + r.height / 2 - ch / 2; }
     if (side === 'right') { x = r.right + cw / 2 + 8; y = r.top + r.height / 2 - ch / 2; }
     x = clamp(x, cw / 2 + 4, innerWidth - cw / 2 - 4);
@@ -882,9 +890,45 @@
   }
 
   // ---------------------------------------------------------------- frame loop
+  let tiltOn = false;
+  let tiltRest = null;
   const light = {
-    set(x, y) { pointer.x = x; pointer.y = y; pointer.active = true; schedule(); }
+    set(x, y) { pointer.x = x; pointer.y = y; pointer.active = true; schedule(); },
+    // Opt in: the phone's tilt moves the light. Call it from a tap; iOS asks for permission.
+    async tilt() {
+      const D = G.DeviceOrientationEvent;
+      if (tiltOn) return true;
+      if (!D || reduced()) return false;
+      if (typeof D.requestPermission === 'function') {
+        try { if ((await D.requestPermission()) !== 'granted') return false; } catch (e) { return false; }
+      }
+      tiltOn = true;
+      addEventListener('deviceorientation', onTilt, { passive: true });
+      return true;
+    }
   };
+  function onTilt(e) {
+    if (e.beta == null || e.gamma == null || reduced()) return;
+    if (aiming() && now() - pointer.at < 3000) return;
+    for (const s of controls.values()) if (s.touch) return;
+    if (!tiltRest) tiltRest = { b: e.beta, g: e.gamma };
+    // The resting pose drifts toward how the phone is held now, so the light recenters on its own.
+    tiltRest.b += (e.beta - tiltRest.b) * 0.01;
+    tiltRest.g += (e.gamma - tiltRest.g) * 0.01;
+    const k = (v) => clamp(v / 25, -1, 1);
+    pointer.type = 'tilt';
+    light.set(innerWidth * (0.5 + 0.45 * k(e.gamma - tiltRest.g)), innerHeight * (0.3 + 0.45 * k(e.beta - tiltRest.b)));
+  }
+
+  // On a touch screen nothing approaches, so each verb introduces itself once, the first time it
+  // comes into view: a short approach glow. It stops once the user knows the verb.
+  const introduced = new Set();
+  function introduce(s) {
+    if (!config.intro || reduced() || s.el.getAttribute('data-sl-intro') === 'none') return;
+    if (introduced.has(s.verb) || fluencyOf(s.verb) > 0.3 || (s.state && s.state !== 'rest')) return;
+    introduced.add(s.verb);
+    try { s.el.animate([{ '--sl-near': 0 }, { '--sl-near': 0.75, offset: 0.4 }, { '--sl-near': 0 }], { duration: 1500, delay: 300, easing: 'ease-in-out' }); } catch (e) { /* no custom property animation */ }
+  }
   function schedule() { if (!raf) raf = requestAnimationFrame(frame); }
   let lastPX = null;
   let lastPY = null;
@@ -922,7 +966,7 @@
     }
     for (const [el, s] of controls) {
       let near = 0;
-      if (visible.has(el) && s.rect && pointer.active && pointer.type !== 'touch') {
+      if (visible.has(el) && s.rect && pointer.active && aiming()) {
         const r = s.rect;
         const radius = +el.getAttribute('data-sl-radius') || config.radius;
         const dx = Math.max(r.left - px, 0, px - r.right);
@@ -939,7 +983,7 @@
         setVar(el, '--sl-near', round(near, 3));
         refresh(s);
       }
-      if (s.armed && s.armSource === 'pointer' && pointer.type !== 'touch' && !s.hover && doc.activeElement !== el && s.near < 0.5) disarm(s, 'leave');
+      if (s.armed && s.armSource === 'pointer' && aiming() && !s.hover && doc.activeElement !== el && s.near < 0.5) disarm(s, 'leave');
       if (s.holding) {
         s.holdP = clamp((now() - s.holdStart) / holdMs(s));
         setVar(el, '--sl-hold', round(s.holdP, 3));
@@ -1300,6 +1344,7 @@
   function onPointerMove(e) {
     pointer.type = e.pointerType || 'mouse';
     if (pointer.type === 'touch') return;
+    pointer.at = now();
     pointer.x = e.clientX;
     pointer.y = e.clientY;
     pointer.active = true;
@@ -1324,6 +1369,16 @@
           if (captionsOn) for (const en of entries) { const s = controls.get(en.target); if (s) (en.isIntersecting ? showCaption(s) : hideCaption(s, true)); }
         }, { rootMargin: '160px' })
       : null;
+    if ('IntersectionObserver' in G && G.matchMedia && matchMedia('(hover: none) and (pointer: coarse)').matches) {
+      introIO = new IntersectionObserver((entries) => {
+        for (const en of entries) {
+          if (!en.isIntersecting) continue;
+          introIO.unobserve(en.target);
+          const s = controls.get(en.target);
+          if (s) introduce(s);
+        }
+      }, { threshold: 0.6 });
+    }
     scan(doc.body);
     if (html.matches(POINTER)) pointed.add(html);
     if (!io) for (const el of [...controls.keys(), ...lit.keys()]) visible.add(el);

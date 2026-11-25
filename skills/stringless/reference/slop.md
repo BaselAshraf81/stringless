@@ -14,6 +14,8 @@ Read this before writing UI code. Label-free design has its own failure modes, a
 - **Puzzle UI.** The user has to experiment to find basic actions. At levels 1 to 3, a cold read must find every control.
 - **Metaphor soup.** A paper desk with a spaceship lever and a glass bubble. One world per product, from LEXICON.md.
 - **One metaphor for everything.** Every action is paper. A world has many materials; use them to tell verbs apart.
+- **Desktop on glass.** The pointer version shipped to phones as it is: meaning that waits for hover, previews hidden under the fingertip, drags that fight the page scroll.
+- **Secret gestures.** Swipes, pinches and shakes with nothing on screen to suggest them and no tap path.
 - **Hidden danger.** Destructive actions hidden behind gestures with no echo and no undo.
 - **Silent to everyone.** "It's visual" as a reason for no accessible name.
 - **Removing content.** Prices, names, dates, error explanations and legal text are information. They keep their words.

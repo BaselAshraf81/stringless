@@ -16,6 +16,7 @@ One round of two or three questions, then wait. Use the structured question tool
 - Who uses this, how often, and in what situation? (Daily expert use and one-time visitors need different strangeness.)
 - Which actions are dangerous or hard to undo?
 - How strange can it get? Offer the five levels in one line each and let the user pick a default.
+- How much of the use happens on phones and tablets?
 - Any constraints: platforms, accessibility standards, brands, frameworks, performance budgets.
 
 State what you inferred and let the user correct it, instead of asking about it.
