@@ -1,7 +1,8 @@
 // Tiny headless Chrome harness over the DevTools protocol. Node 22+ (global WebSocket), no dependencies.
 // usage: node tests/cdp.mjs <scenario.mjs>
 // A scenario exports `default async (page) => {}` and calls page.expect(condition, label).
-// Env: CHROME=<path to Chrome or Edge>, BASE=<url of the served repo root>, SHOTS=<dir for screenshots>.
+// Env: CHROME=<path to Chrome or Edge>, BASE=<url of the served repo root>, SHOTS=<dir for screenshots>,
+// HOST_RULES=<Chrome host resolver rules>, e.g. 'MAP example.com 192.0.2.1' to test a deploy before DNS catches up.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -33,7 +34,8 @@ async function launch() {
   const dir = mkdtempSync(join(tmpdir(), 'sl-cdp-'));
   const proc = spawn(findChrome(), [
     `--remote-debugging-port=${port}`, `--user-data-dir=${dir}`, '--headless=new', '--no-first-run',
-    '--no-default-browser-check', '--window-size=1280,800', '--hide-scrollbars', '--mute-audio', 'about:blank'
+    '--no-default-browser-check', '--window-size=1280,800', '--hide-scrollbars', '--mute-audio',
+    ...(process.env.HOST_RULES ? [`--host-resolver-rules=${process.env.HOST_RULES}`] : []), 'about:blank'
   ], { stdio: 'ignore' });
   for (let i = 0; i < 80; i++) {
     try {
