@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "stringless",
-  "description": "Stringless: UI components that explain themselves without text labels.",
+  "description": "Stringless: make your UI speak for itself.",
   "owner": {
     "name": "Basel Ashraf",
     "url": "https://baselashraf.com"
@@ -10,7 +10,7 @@
     {
       "name": "stringless",
       "source": "./",
-      "description": "Design and build interface parts that show what they do through material, motion, form, space and time instead of labels. Includes a runtime, a seed roller, a string detector and a cold-read subagent.",
+      "description": "Make your UI speak for itself. Designs controls with no text labels: a note burns to delete, wet ink dries to save, glass frosts to go private. 10 commands, a zero-dependency runtime and accessibility checks.",
       "category": "design",
       "tags": ["design", "ui", "ux", "frontend", "motion", "accessibility"]
     }

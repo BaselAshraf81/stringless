@@ -25,12 +25,13 @@
 
   const MOBILE = { w: 430, h: 860 };
   const scenes = [
-    { id: 'delete', src: 'examples/ember-delete.html', size: [1000, 600], anchor: '.card:nth-child(2)', label: 'Delete', kind: 'danger', ms: 11000, play: playDelete },
-    { id: 'save', src: 'examples/wet-ink-save.html', size: [1000, 600], anchor: '.blotter', label: 'Save', kind: 'primary', ms: 11000, play: playSave },
-    { id: 'private', src: 'examples/frost-privacy.html', size: [960, 576], anchor: '.photo', label: 'Private', kind: 'switch', ms: 10500, play: playPrivate },
-    { id: 'choose', src: 'examples/marble-choice.html', size: [1000, 600], anchor: '.tray', label: 'Shipping: Standard', kind: 'select', ms: 10500, play: playChoose },
-    { id: 'suggest', src: 'examples/vapor-suggest.html?embed', size: [960, 576], anchor: '.field', label: 'Accept suggestion', kind: 'ai', ms: 10500, play: playSuggest },
-    { id: 'export', src: 'examples/paper-export.html?embed', size: [1200, 720], anchor: '.slot', label: 'Export CSV', kind: 'neutral', ms: 14000, play: playExport }
+    // Extensionless paths: the host would answer page.html with a redirect, which costs a round trip per switch.
+    { id: 'delete', src: 'examples/ember-delete', size: [1000, 600], anchor: '.card:nth-child(2)', label: 'Delete', kind: 'danger', ms: 11000, play: playDelete },
+    { id: 'save', src: 'examples/wet-ink-save', size: [1000, 600], anchor: '.blotter', label: 'Save', kind: 'primary', ms: 11000, play: playSave },
+    { id: 'private', src: 'examples/frost-privacy', size: [960, 576], anchor: '.photo', label: 'Private', kind: 'switch', ms: 10500, play: playPrivate },
+    { id: 'choose', src: 'examples/marble-choice', size: [1000, 600], anchor: '.tray', label: 'Shipping: Standard', kind: 'select', ms: 10500, play: playChoose },
+    { id: 'suggest', src: 'examples/vapor-suggest?embed', size: [960, 576], anchor: '.field', label: 'Accept suggestion', kind: 'ai', ms: 10500, play: playSuggest },
+    { id: 'export', src: 'examples/paper-export?embed', size: [1200, 720], anchor: '.slot', label: 'Export CSV', kind: 'neutral', ms: 14000, play: playExport }
   ];
 
   // ?scenes=0,2,5 plays only those scenes, in that order.
@@ -503,8 +504,12 @@
     else { f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1; }
   }
 
+  // Two tokens. `swap` belongs to scene switches: only a newer pick may cancel one.
+  // `run` belongs to the ghost: a visitor reaching in cancels the ghost, never the switch they asked for.
+  let swap = 0;
   async function go(index) {
-    const id = ++run;
+    const sid = ++swap;
+    run++;
     current = (index + scenes.length) % scenes.length;
     const scene = scenes[current];
     markScene(current);
@@ -514,18 +519,27 @@
     const f = slots[1 - active];
     try {
       await load(f, scene);
-      if (id !== run) return;
-      prepare(f);
-      const old = slots[active];
-      f.classList.add('live');
-      old.classList.remove('live');
-      interactive(old, false);
-      const oldGen = old._gen;
-      setTimeout(() => { if (old._gen === oldGen && !old.classList.contains('live')) { old.onload = null; old.src = 'about:blank'; } }, 800);
-      active = 1 - active;
-      fit(f, designFor(scene));
-      bind(f);
-      if (mode !== 'auto') { interactive(f, true); return; }
+    } catch (err) {
+      if (sid !== swap) return;
+      console.warn('[stringless reel]', scene.id, err && err.message);
+      await sleep(800);
+      if (sid === swap && mode === 'auto') go(after(current));
+      return;
+    }
+    if (sid !== swap) return;
+    prepare(f);
+    const old = slots[active];
+    f.classList.add('live');
+    old.classList.remove('live');
+    interactive(old, false);
+    const oldGen = old._gen;
+    setTimeout(() => { if (old._gen === oldGen && !old.classList.contains('live')) { old.onload = null; old.src = 'about:blank'; } }, 800);
+    active = 1 - active;
+    fit(f, designFor(scene));
+    bind(f);
+    if (mode !== 'auto') { interactive(f, true); return; }
+    const id = ++run;
+    try {
       interactive(f, false);
       await wait(id, 700);
       setBurning(true, scene.ms);

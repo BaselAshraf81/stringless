@@ -88,8 +88,9 @@ h1 { margin: 0; font: 200 clamp(60px, 10vw, 140px)/.86 var(--font); letter-spaci
 }
 .stage.yours { box-shadow: 0 0 0 1px rgb(76 212 255 / .55), 0 34px 100px -30px rgb(76 212 255 / .55); }
 .screen { position: absolute; inset: 0; background: #000; }
-.screen iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; opacity: 0; transition: opacity .6s ease; background: transparent; }
-.screen iframe.live { opacity: 1; }
+/* Only the live frame takes input. The other one is fading out or loading, and must never sit on top of it. */
+.screen iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; opacity: 0; transition: opacity .3s ease; background: transparent; pointer-events: none; }
+.screen iframe.live { opacity: 1; pointer-events: auto; z-index: 1; }
 .overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
 .trail { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: screen; }
 

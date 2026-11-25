@@ -48,6 +48,11 @@ const server = createServer(async (req, res) => {
       if (hasIndex) { file = index; info = hasIndex; }
       else { res.writeHead(200, { 'content-type': types['.html'], 'cache-control': 'no-store' }).end(await listing(file, urlPath)); return; }
     }
+    // Like most static hosts, /page also serves page.html.
+    if (!info && !extname(file)) {
+      const page = await stat(file + '.html').catch(() => null);
+      if (page && page.isFile()) { file += '.html'; info = page; }
+    }
     if (!info) { res.writeHead(404, { 'content-type': 'text/plain' }).end('Not found: ' + urlPath); return; }
     const body = await readFile(file);
     res.writeHead(200, { 'content-type': types[extname(file).toLowerCase()] || 'application/octet-stream', 'cache-control': 'no-store' });

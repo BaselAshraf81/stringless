@@ -19,6 +19,13 @@ cpSync(join(assets, 'examples'), join(out, 'examples'), { recursive: true });
 cpSync(join(assets, 'runtime'), join(out, 'runtime'), { recursive: true });
 writeFileSync(join(out, 'robots.txt'), 'User-agent: *\nAllow: /\nSitemap: https://stringless.baselashraf.com/sitemap.xml\n');
 writeFileSync(join(out, 'sitemap.xml'), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://stringless.baselashraf.com/</loc></url></urlset>\n');
-// Long cache for fonts, short for everything else (Workers static assets reads _headers).
-writeFileSync(join(out, '_headers'), '/fonts/*\n  Cache-Control: public, max-age=31536000, immutable\n/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n');
+// Workers static assets reads _headers. Fonts never change. The reel reloads an example on every scene,
+// so examples and the runtime get a short cache instead of a revalidation round trip each time.
+const brief = '  Cache-Control: public, max-age=600, stale-while-revalidate=86400\n';
+writeFileSync(join(out, '_headers'), [
+  '/fonts/*\n  Cache-Control: public, max-age=31536000, immutable\n',
+  '/examples/*\n' + brief,
+  '/runtime/*\n' + brief,
+  '/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n'
+].join(''));
 console.log('built', out);
