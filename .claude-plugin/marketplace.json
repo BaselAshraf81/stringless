@@ -10,7 +10,7 @@
     {
       "name": "stringless",
       "source": "./",
-      "description": "Make your UI speak for itself. Designs controls with no text labels: a note burns to delete, wet ink dries to save, glass frosts to go private. 10 commands, a zero-dependency runtime and accessibility checks.",
+      "description": "UI design with no strings attached. An experimental design methodology: your agent designs controls that show what they do through material, form and motion, so they need no text labels. 10 commands, a zero-dependency runtime and accessibility checks.",
       "category": "design",
       "tags": ["design", "ui", "ux", "frontend", "motion", "accessibility"]
     }

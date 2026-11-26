@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="96" height="96">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="0.8"/></filter>
+  </defs>
+  <rect x="0.2" y="0.2" width="31.6" height="31.6" rx="7.6" fill="#04070c" stroke="#ffffff" stroke-opacity=".14" stroke-width=".4"/>
+  <g fill="none" stroke="#ff4b3e" stroke-width="2.6" stroke-linecap="round">
+    <g filter="url(#glow)" opacity=".75">
+      <path d="M22.8 9.6C21.6 7.1 19.1 5.6 16 5.6c-3.7 0-6.6 2.1-6.6 5.1 0 2.5 2 3.7 4.2 4.4"/>
+      <path d="M18.6 16.9c2.4.9 4.3 2.2 4.3 4.8 0 3.1-3 5.1-6.8 5.1-3.3 0-5.8-1.4-6.9-4"/>
+    </g>
+    <path d="M22.8 9.6C21.6 7.1 19.1 5.6 16 5.6c-3.7 0-6.6 2.1-6.6 5.1 0 2.5 2 3.7 4.2 4.4"/>
+    <path d="M18.6 16.9c2.4.9 4.3 2.2 4.3 4.8 0 3.1-3 5.1-6.8 5.1-3.3 0-5.8-1.4-6.9-4"/>
+  </g>
+</svg>

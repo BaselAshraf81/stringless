@@ -1,6 +1,6 @@
 # Runtime
 
-`assets/runtime/stringless.js` and `stringless.css`: 16 KB and 5 KB gzipped, no dependencies, no build step. They give every stringless control the plumbing (proximity, rehearsal, weighted holds, captions, memory, verbs, echoes, sound) so the design work goes into the metaphor.
+`assets/runtime/stringless.js` and `stringless.css`: 18 KB and 5 KB gzipped, no dependencies, no build step. They give every stringless control the plumbing (proximity, rehearsal, weighted holds, captions, memory, verbs, echoes, sound) so the design work goes into the metaphor.
 
 ## Install
 

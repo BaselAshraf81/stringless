@@ -29,7 +29,7 @@ Visitors arrive from GitHub, X or Reddit, mostly on desktop, some on phones. Ins
 ## Capabilities and Constraints
 
 - 10 commands: init, lexicon, map, stage, forge, unstring, dream, guess, audit, tune.
-- Runtime: about 16 KB gzipped, no dependencies, data attributes and CSS variables.
+- Runtime: about 18 KB gzipped, no dependencies, data attributes and CSS variables.
 - Six working examples: ember delete, wet-ink save, frost-pane privacy, marble choice, vapor AI suggestions, slot-print export.
 - Every control keeps an accessible name, works by keyboard and touch, and keeps its meaning with reduced motion.
 - It is experimental. No usage numbers, customers or testimonials exist yet.

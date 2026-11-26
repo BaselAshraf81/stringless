@@ -1,12 +1,31 @@
-# Stringless
+<p align="center">
+  <img src="docs/images/logo.svg" width="96" height="96" alt="">
+</p>
 
-Make your UI speak for itself.
+<h1 align="center">Stringless</h1>
 
-Stringless is an agent skill for designing interfaces that need no text labels. Each control shows what it does through material, motion, form, space and time. It's a new, experimental approach by [Basel Ashraf](https://baselashraf.com).
+<p align="center"><b>UI design with no strings attached.</b></p>
 
-**Live demo: [stringless.baselashraf.com](https://stringless.baselashraf.com)**
+<p align="center">An experimental design methodology by <a href="https://baselashraf.com">Basel Ashraf</a>, packaged as a skill for Claude Code and other coding agents. Your agent designs controls that show what they do through material, form and motion, so they need no text labels.</p>
 
-![A pointer uses three controls with no words on them. It burns a note and brings it back from the ash, frosts a photo to make it private, and prints a sales report as a CSV strip and then as a photo.](docs/images/reel.webp)
+<p align="center">
+  <img alt="License: MIT" src="https://img.shields.io/github/license/BaselAshraf81/stringless?color=4cd4ff">
+  <img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude_Code-plugin-D97757">
+  <img alt="Agent Skills" src="https://img.shields.io/badge/Agent_Skills-compatible-4cd4ff">
+  <img alt="Runtime with zero dependencies" src="https://img.shields.io/badge/runtime-zero_dependencies-ff4b3e">
+</p>
+
+<p align="center">
+  <a href="https://stringless.baselashraf.com"><b>Live demo</b></a> ·
+  <a href="#install">Install</a> ·
+  <a href="#use">Commands</a> ·
+  <a href="#the-method">The method</a> ·
+  <a href="#the-words-are-still-there">Accessibility</a>
+</p>
+
+<p align="center">
+  <img src="docs/images/reel.webp" width="720" alt="A pointer uses three controls with no words on them. It burns a note and brings it back from the ash, frosts a photo to make it private, and prints a sales report as a CSV strip and then as a photo.">
+</p>
 
 ## Install
 
@@ -77,7 +96,7 @@ Agents reach for the same few ideas, like a paper plane for send. So before it i
 ## What's inside
 
 - `skills/stringless/`: the skill, its reference files and a catalog of 160 starting concepts.
-- `skills/stringless/assets/runtime/`: `stringless.js` (16 KB gzipped) and `stringless.css`. No framework needed; it runs on data attributes. Add it to a project with `node skills/stringless/scripts/install-runtime.mjs`.
+- `skills/stringless/assets/runtime/`: `stringless.js` (18 KB gzipped) and `stringless.css`. No framework needed; it runs on data attributes. Add it to a project with `node skills/stringless/scripts/install-runtime.mjs`.
 - `skills/stringless/assets/examples/`: the six controls from the demo. Run `node skills/stringless/scripts/serve.mjs .` and open http://127.0.0.1:4173/gallery/.
 - `site/`: the demo site.
 
