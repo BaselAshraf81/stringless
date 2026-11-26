@@ -4,7 +4,7 @@ description: Design and build interface components that explain themselves witho
 license: MIT
 metadata:
   author: Basel Ashraf
-  version: "0.2.0"
+  version: "0.3.0"
   homepage: https://github.com/BaselAshraf81/stringless
 ---
 
@@ -156,7 +156,7 @@ The catalog holds starting concepts for common needs. They are starting points, 
 Verify in bounded passes. Build fully, then inspect once in a batch, fix everything that batch shows, confirm with at most one more round, and stop.
 
 - Capture each control at rest, approach, rehearse, commit and echo. Do a keyboard pass, a touch pass ([touch](reference/touch.md#verify-on-touch)) and reduced motion.
-- Run `node <skill-dir>/scripts/stringcheck.mjs <changed files or folders>` and fix errors.
+- Run `node <skill-dir>/scripts/stringcheck.mjs <changed files or folders>` and fix errors. With the Claude Code plugin, a hook already runs it after each edit to a Stringless file and returns what it found: fix each finding, or waive an intended one with a `stringcheck-disable <rule>: <reason>` comment.
 - Run `guess` on anything at strangeness 3 or higher when screenshots are possible.
 
 ## Report

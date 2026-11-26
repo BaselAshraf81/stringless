@@ -2,7 +2,8 @@
 // Runs every check: skill structure, the scripts, and each example in headless Chrome.
 // usage: node tests/run.mjs [--no-browser] [scenario-name ...]
 import { spawn, spawnSync } from 'node:child_process';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -61,6 +62,26 @@ r = node(join(skill, 'scripts', 'roll.mjs'), ['--world', '--count', '3', '--json
 try { ok(JSON.parse(r.stdout).results.length === 3, 'roll --world returns three worlds'); } catch { ok(false, 'roll --world returns JSON'); }
 r = spawnSync(process.execPath, ['--check', join(skill, 'assets', 'runtime', 'stringless.js')], { encoding: 'utf8' });
 ok(r.status === 0, 'runtime parses');
+// ---- hooks (the Claude Code plugin's hooks/hooks.json)
+console.log('hooks');
+const hook = (mode, input) => spawnSync(process.execPath, [join(root, 'hooks', 'check.mjs'), mode], { input: JSON.stringify(input), encoding: 'utf8', env: { ...process.env, STRINGLESS_HOOK: '' } });
+r = hook('post-edit', { cwd: root, tool_name: 'Edit', tool_input: { file_path: join(root, 'tests', 'fixtures', 'bad.html') } });
+let hookContext = '';
+try { hookContext = JSON.parse(r.stdout).hookSpecificOutput.additionalContext; } catch {}
+ok(/sl-focus/.test(hookContext) && /rehearsal-write/.test(hookContext), 'the edit hook hands stringcheck findings to the agent');
+r = hook('post-edit', { cwd: root, tool_name: 'Write', tool_input: { file_path: join(skill, 'assets', 'examples', 'marble-choice.html') } });
+ok(r.stdout === '', 'the edit hook stays quiet on a clean Stringless file');
+r = hook('post-edit', { cwd: root, tool_name: 'Edit', tool_input: { file_path: join(root, 'site', '404.html') } });
+ok(r.stdout === '', 'the edit hook ignores files that do not use Stringless');
+const project = mkdtempSync(join(tmpdir(), 'sl-hook-'));
+writeFileSync(join(project, 'LEXICON.md'), readFileSync(join(skill, 'assets', 'templates', 'LEXICON.md'), 'utf8'));
+mkdirSync(join(project, '.git'));
+mkdirSync(join(project, 'src'));
+r = hook('session', { cwd: join(project, 'src'), source: 'startup' });
+ok(/uses Stringless/.test(r.stdout), 'the session hook notices a project with a Stringless lexicon');
+rmSync(project, { recursive: true, force: true });
+r = hook('session', { cwd: root, source: 'startup' });
+ok(r.stdout === '', 'the session hook stays quiet in other projects');
 
 // ---- browser scenarios
 if (!noBrowser) {

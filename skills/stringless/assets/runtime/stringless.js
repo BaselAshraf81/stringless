@@ -1,4 +1,4 @@
-/*! Stringless runtime 0.2.0 | MIT | https://github.com/BaselAshraf81/stringless
+/*! Stringless runtime 0.3.0 | MIT | https://github.com/BaselAshraf81/stringless
  *
  * Zero-dependency helpers for controls that explain themselves without labels.
  * Load as a classic <script>, or `import "./stringless.js"` from a bundler.
@@ -9,7 +9,7 @@
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   if (G.Stringless && G.Stringless.version) return;
 
-  const VERSION = '0.2.0';
+  const VERSION = '0.3.0';
   const doc = document;
   const html = doc.documentElement;
   const CONTROL = '[data-sl-verb]';

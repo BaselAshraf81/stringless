@@ -17,6 +17,8 @@ Claude Code:
 /plugin install stringless@stringless
 ```
 
+The plugin also adds two hooks. After the agent edits a file that uses Stringless, one runs `stringcheck` on it and hands the agent what it found. In a project with a Stringless `LEXICON.md`, the other tells the agent at the start of each session, so new controls follow the lexicon even when you don't name the skill. Set `STRINGLESS_HOOK=0` to turn them off. They need Node 18 or later, like the scripts.
+
 Cursor, Codex, Gemini CLI, Copilot, Kiro and other tools that read [Agent Skills](https://agentskills.io):
 
 ```
